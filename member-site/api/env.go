@@ -14,7 +14,7 @@ const (
 )
 
 func Env() Environment {
-	if strings.HasSuffix(os.Args[0], ".test") {
+	if strings.HasSuffix(os.Args[0], ".test") || os.Args[1] == "-test.run" {
 		return Test
 	}
 	v := os.Getenv("APP_ENV")

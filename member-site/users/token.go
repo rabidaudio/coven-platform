@@ -3,11 +3,13 @@ package users
 import (
 	"crypto/ed25519"
 	"crypto/x509"
+	"encoding/pem"
 	"fmt"
 	"os"
 	"time"
 
 	"github.com/atlantacoven/coven-platform/tlvwt"
+	"github.com/integralist/go-findroot/find"
 )
 
 const ExpiresIn = 14 * 24 * time.Hour // 2 weeks
@@ -15,11 +17,20 @@ const ExpiresIn = 14 * 24 * time.Hour // 2 weeks
 var privkey ed25519.PrivateKey
 
 func init() {
-	keydata, err := os.ReadFile("member-site/signing.pem")
+	root, err := find.Repo()
+	if err != nil {
+		panic(fmt.Errorf("find project root: %w", err))
+	}
+	path := root.Path + "/member-site/signing.pem"
+	keydata, err := os.ReadFile(path)
 	if err != nil {
 		panic(fmt.Errorf("open private key: %w", err))
 	}
-	pk, err := x509.ParsePKCS8PrivateKey(keydata)
+	block, _ := pem.Decode(keydata)
+	if block == nil || block.Type != "ED25519 PRIVATE KEY" {
+		panic(fmt.Errorf("invalid private key"))
+	}
+	pk, err := x509.ParsePKCS8PrivateKey(block.Bytes)
 	if err != nil {
 		panic(fmt.Errorf("decode private key: %w", err))
 	}
