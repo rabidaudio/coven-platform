@@ -1,11 +1,7 @@
 package space.thecoven.android
 
-import android.content.ComponentName
-import android.content.Intent
-import android.nfc.NdefMessage
-import android.nfc.NfcAdapter
+import android.content.IntentFilter
 import android.nfc.NfcManager
-import android.nfc.cardemulation.CardEmulation
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
@@ -22,23 +18,19 @@ import androidx.compose.ui.tooling.preview.Preview
 import space.thecoven.android.ui.theme.TheCovenTheme
 
 class MainActivity : ComponentActivity() {
+
+    val br = NFCStateBroadcastReceiver()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        handleAuthIntent(intent)
 
         val manager = getSystemService(NFC_SERVICE) as NfcManager
         val adapter = manager.defaultAdapter
 
         Log.d("NFC", "adapter=$adapter enabled=${adapter.isEnabled}")
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            Log.d("NFC", "isSecureNfcSupported=${adapter.isSecureNfcSupported} isSecureNfcEnabled=${adapter.isSecureNfcEnabled}")
-        }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
-            Log.d("NFC", "isObserveModeSupported=${adapter.isObserveModeSupported} isObserveModeEnabled=${adapter.isObserveModeEnabled} isReaderOptionSupported=${adapter.isReaderOptionSupported} isReaderOptionEnabled=${adapter.isReaderOptionEnabled}")
-        }
-        if (Build.VERSION.SDK_INT_FULL >= Build.VERSION_CODES_FULL.BAKLAVA_1) {
-            Log.d("NFC", "isExitFramesSupported=${adapter.isExitFramesSupported} isTagIntentAllowed=${adapter.isTagIntentAllowed} isTagIntentAppPreferenceSupported=${adapter.isTagIntentAppPreferenceSupported}")
-        }
+        // TODO if not isEnabled show error
+
+        // TODO: if dimensions available show on UI
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             val antenna = adapter.nfcAntennaInfo
             Log.d("NFC", "w=${antenna?.deviceWidth} h=${antenna?.deviceHeight} foldable=${antenna?.isDeviceFoldable}")
@@ -46,17 +38,9 @@ class MainActivity : ComponentActivity() {
                 Log.d("NFC", "antenna_x=${antenna.locationX} antenna_y=${antenna.locationY}")
             }
         }
+        registerReceiver(br, IntentFilter())
 
-        val cardEm = CardEmulation.getInstance(adapter)
-
-        val isDefault = cardEm.isDefaultServiceForAid(ComponentName(application, DoorAccessService::class.java.name), getString(R.string.aid))
-
-        Log.d("NFC", "isDefault=$isDefault")
-
-//        var message = NdefRecord.createUri("coven://thecoven.space/door")
-//        Log.d("NFC", "message=$message id=${message.id.toHexString()} payload-ascii=${message.payload.toString(Charsets.US_ASCII)}")
-//        message = NdefRecord.createApplicationRecord(application.packageName)
-//        Log.d("NFC", "message=$message id=${message.id.toHexString()} payload-ascii=${message.payload.toString(Charsets.US_ASCII)}")
+        // TODO br.channel.receive
 
         enableEdgeToEdge()
         setContent {
@@ -71,21 +55,9 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    override fun onNewIntent(intent: Intent) {
-        super.onNewIntent(intent)
-        handleAuthIntent(intent)
-    }
-
-    fun handleAuthIntent(intent: Intent) {
-        Log.i("NFC", "intent: $intent")
-        if (NfcAdapter.ACTION_NDEF_DISCOVERED == intent.action) {
-            val messages = intent.getParcelableArrayListExtra<NdefMessage>(NfcAdapter.EXTRA_NDEF_MESSAGES) ?: emptyList<NdefMessage>()
-            for (message in messages) {
-                Log.i("NFC", "message: $message")
-            }
-        } else {
-            Log.i("NFC", "not an NFC intent")
-        }
+    override fun onDestroy() {
+        unregisterReceiver(br)
+        super.onDestroy()
     }
 }
 

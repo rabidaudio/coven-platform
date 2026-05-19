@@ -3,7 +3,7 @@ package space.thecoven.android
 import android.nfc.cardemulation.HostApduService
 import android.os.Bundle
 import android.util.Log
-import java.util.Locale
+import space.thecoven.android.NFCStateBroadcastReceiver.NFCState
 
 /**
  * This class uses Android's support for Host Card Emulation to exchange keys with the door lock
@@ -69,10 +69,12 @@ class DoorAccessService : HostApduService() {
                         val aid = getString(R.string.aid).hexToByteArray()
                         if (!cmd.data.contentEquals(aid))
                             return IDCard.Status.FileOrApplicationNotFound.toResponse()
+                        setState(NFCState.Connected)
                         return IDCard.Status.OK.toResponse()
                     }
 
                     IDCard.Command.GENERAL_AUTHENTICATE -> {
+                        setState(NFCState.Authenticating)
                         val challenge = cmd.data
                         Log.d("NFC", "challenge=${challenge.toHexString()}")
 
@@ -107,7 +109,9 @@ class DoorAccessService : HostApduService() {
                         if (status.isOkay()) {
                             Log.d("NFC", "door unlocked")
                             // TODO: show local notification
+                            setState(NFCState.Unlocked)
                         } else {
+                            setState(NFCState.FailedTokenExpired) // TODO: parse status
                             Log.d("NFC", "door NOT unlocked: $status")
                         }
                         return IDCard.Status.OK.toResponse()
@@ -127,6 +131,7 @@ class DoorAccessService : HostApduService() {
     }
 
     override fun onDeactivated(reason: Int) {
+        setState(NFCState.Disconnected)
         when (reason) {
             DEACTIVATION_LINK_LOSS ->
                 Log.w("NFC", "DoorAccessService deactivated reason=link lost")
@@ -137,5 +142,9 @@ class DoorAccessService : HostApduService() {
             else ->
                 Log.w("NFC", "DoorAccessService deactivated reason=unknown ($reason)")
         }
+    }
+
+    fun setState(state: NFCState) {
+        NFCStateBroadcastReceiver.broadcastState(this, state)
     }
 }
