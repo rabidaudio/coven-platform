@@ -9,7 +9,7 @@ import (
 
 func TestEncode(t *testing.T) {
 	msg := TLVMessage{
-		"foo": []byte{ 0xDE, 0xAD, 0xBE, 0xEF },
+		"foo": []byte{0xDE, 0xAD, 0xBE, 0xEF},
 		"bar": []byte("BAR"),
 		"baz": []byte{},
 	}
@@ -42,7 +42,7 @@ func TestInvalid(t *testing.T) {
 	_, err := a.EncodeToString()
 	assert.ErrorIs(t, err, ErrInvalidKey{Key: "toolong"})
 
-		b := TLVMessage{
+	b := TLVMessage{
 		"s": []byte("asdf"),
 	}
 	_, err = b.EncodeToString()

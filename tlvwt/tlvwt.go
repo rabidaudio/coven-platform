@@ -109,7 +109,7 @@ func (t Token) SignAndEncode(w io.Writer, sign SigningAlgorithm) (int, error) {
 }
 
 func (t Token) SignAndEncodeString(sign SigningAlgorithm) ([]byte, error) {
-		buf := bytes.Buffer{}
+	buf := bytes.Buffer{}
 	_, err := t.SignAndEncode(&buf, sign)
 	if err != nil {
 		return nil, err
@@ -121,7 +121,7 @@ func (t Token) String() string {
 	return TLVMessage(t).String()
 }
 
-func VerifyAndExtractToken(tokendata []byte, verifyfn func (msg, sig []byte) bool) (t TLVMessage, err error) {
+func VerifyAndExtractToken(tokendata []byte, verifyfn func(msg, sig []byte) bool) (t TLVMessage, err error) {
 	tmsg, err := DecodeString(tokendata)
 	if err != nil {
 		return nil, err

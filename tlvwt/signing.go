@@ -21,8 +21,8 @@ func (AlgoNone) Sign(msg []byte) ([]byte, error) {
 	return []byte{}, nil
 }
 
-type algoHMAC struct{
-	sha func () hash.Hash
+type algoHMAC struct {
+	sha  func() hash.Hash
 	name string
 }
 
@@ -36,16 +36,16 @@ func (a *algoHMAC) Sign(msg []byte) ([]byte, error) {
 }
 
 func HS256() SigningAlgorithm {
-	return &algoHMAC { sha: sha256.New, name: "HS256" }
+	return &algoHMAC{sha: sha256.New, name: "HS256"}
 }
 
-// this algorithm is non-standard in JWT but we are using it
-type Ed25519Algorithm struct{
+// recently specified: https://datatracker.ietf.org/doc/html/rfc9864#section-4.1.2
+type Ed25519Algorithm struct {
 	Key ed25519.PrivateKey
 }
 
 func (Ed25519Algorithm) Tag(t Token) {
-	t.SetAlgorithm("ed25519")
+	t.SetAlgorithm("Ed25519")
 }
 
 func (a Ed25519Algorithm) Sign(msg []byte) ([]byte, error) {

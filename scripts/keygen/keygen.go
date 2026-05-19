@@ -91,7 +91,7 @@ func generateExpiredToken(uid int, serverkey ed25519.PrivateKey) []byte {
 	token := tlvwt.Token{}
 	token.SetType("TWT")
 	token.SetIssuer(DOMAIN)
-	expires := time.Now().Add(-24*time.Hour)
+	expires := time.Now().Add(-24 * time.Hour)
 	token.SetExpiration(expires)
 	tlvwt.TLVMessage(token).SetUInt64("uid", uint64(uid))
 	return must(token.SignAndEncodeString(tlvwt.Ed25519Algorithm{Key: serverkey}))

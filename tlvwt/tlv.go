@@ -14,14 +14,16 @@ import (
 
 // ErrInvalidKey is returned when encoding a TLV object with a tag
 // whose length is not 3 bytes.
-type ErrInvalidKey struct { Key string }
+type ErrInvalidKey struct{ Key string }
+
 func (err ErrInvalidKey) Error() string {
 	return fmt.Errorf("invalid key in TLV: %v", err.Key).Error()
 }
 
 // ErrInvalidKey is returned when encoding a TLV object with a field
 // value whose length is greater than 255 bytes.
-type ErrInvalidLength struct { Key string }
+type ErrInvalidLength struct{ Key string }
+
 func (err ErrInvalidLength) Error() string {
 	return fmt.Errorf("invalid value for key in TLV: %v", err.Key).Error()
 }
@@ -52,7 +54,6 @@ func (t TLVMessage) GetDate(key string) time.Time {
 	return time.Unix(int64(t.GetUInt64(key)), 0)
 }
 
-
 func (msg TLVMessage) Encode(w io.Writer) (int, error) {
 	keys := slices.Collect(maps.Keys(msg))
 	slices.Sort(keys)
@@ -73,7 +74,7 @@ func (msg TLVMessage) Encode(w io.Writer) (int, error) {
 		if err != nil {
 			return n, err
 		}
-		nn, err = w.Write([]byte{ uint8(len(msg[k])) })
+		nn, err = w.Write([]byte{uint8(len(msg[k]))})
 		n += nn
 		if err != nil {
 			return n, err
@@ -110,7 +111,7 @@ func DecodeString(data []byte) (TLVMessage, error) {
 		if (len(data) - 4) < size {
 			return nil, ErrInvalidLength{}
 		}
-		msg[tag] = data[4:4+size]
+		msg[tag] = data[4 : 4+size]
 		data = data[4+size:]
 	}
 }

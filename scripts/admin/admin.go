@@ -58,24 +58,24 @@ func main() {
 }
 
 func Register(ctx context.Context) {
-		if *registerEmail == "" {
-			fmt.Println("email is required")
-			ShowHelp()
-		}
-		pass := *registerPassword
-		if pass == "" {
-			pass = randomPassword()
-		}
+	if *registerEmail == "" {
+		fmt.Println("email is required")
+		ShowHelp()
+	}
+	pass := *registerPassword
+	if pass == "" {
+		pass = randomPassword()
+	}
 
-		u, err := users.Register(ctx, *registerName, *registerEmail, pass)
-		if err != nil {
-			fmt.Printf("registration failed: %v\n", err)
-			os.Exit(10)
-		}
-		fmt.Printf("User %v registered.\n", u.Id)
-		if *registerPassword == "" {
-			fmt.Printf("Temporary password: %v\n", pass)
-		}
+	u, err := users.Register(ctx, *registerName, *registerEmail, pass)
+	if err != nil {
+		fmt.Printf("registration failed: %v\n", err)
+		os.Exit(10)
+	}
+	fmt.Printf("User %v registered.\n", u.Id)
+	if *registerPassword == "" {
+		fmt.Printf("Temporary password: %v\n", pass)
+	}
 }
 
 func ShowHelp() {

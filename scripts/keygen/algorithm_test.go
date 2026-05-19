@@ -20,10 +20,10 @@ var KEM = hpke.DHKEM(ecdh.X25519())
 var KDF = hpke.HKDFSHA256()
 var AEAD = hpke.AES128GCM()
 
-var ExpiresAfter = time.Duration(14*24*time.Hour)
+var ExpiresAfter = time.Duration(14 * 24 * time.Hour)
 
 type Server struct {
-	PublicKey ed25519.PublicKey
+	PublicKey  ed25519.PublicKey
 	privateKey ed25519.PrivateKey
 }
 
@@ -55,7 +55,7 @@ func (s *Server) GenerateUserToken(uid int) []byte {
 }
 
 type DoorLock struct {
-	PublicKey ed25519.PublicKey
+	PublicKey  ed25519.PublicKey
 	privateKey ed25519.PrivateKey
 
 	recvKey hpke.PrivateKey
@@ -173,7 +173,6 @@ func (a *App) EncryptToken(challenge, doorpub []byte) []byte {
 	e = append(e, ct...)
 	return e
 }
-
 
 func TestAlgorithm(t *testing.T) {
 	userId := 1234

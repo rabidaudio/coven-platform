@@ -15,7 +15,7 @@ type User struct {
 }
 
 func Register(ctx context.Context, name, email, password string) (*User, error) {
-	u := User{ Name: name, Email: email }
+	u := User{Name: name, Email: email}
 	u.SetPassword(password)
 	if err := create(ctx, &u); err != nil {
 		return nil, err
@@ -44,9 +44,3 @@ func (u *User) VerifyPassword(p string) bool {
 	}
 	panic(fmt.Errorf("password compare: %w", err))
 }
-
-// GenerateSecret generates a secret signed by the server that can be used by the
-// app to unlock the door.
-// func GenerateSecret() (string, error) {
-
-// }

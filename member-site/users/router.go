@@ -13,8 +13,8 @@ type PutSessionRequestBody struct {
 }
 
 type PutSessionResponseBody struct {
-	Id         int    `json:"id"`
-	UserSecret []byte `json:"user_secret,omitempty"`
+	Id    int    `json:"id"`
+	Token []byte `json:"token,omitempty"`
 }
 
 func Router(r chi.Router) {
@@ -37,9 +37,15 @@ func postSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	token, err := u.GenerateToken()
+	if err != nil {
+		api.RespondError(w, err)
+		return
+	}
+
 	res := PutSessionResponseBody{
-		Id: u.Id,
-		// UserSecret: ,
+		Id:    u.Id,
+		Token: token,
 	}
 	api.Respond(w, &res, "OK")
 }
