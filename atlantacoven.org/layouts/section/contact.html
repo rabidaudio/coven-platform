@@ -48,17 +48,19 @@
                 {{ $ch.body | safeHTML }}
               </p>
 
-              {{ if $ch.qr_placeholder }}
+              {{ if $ch.qr_image }}
                 <div
                   class="mt-4 flex flex-col items-center gap-2 border-2 border-dashed p-4"
                   style="border-color: var(--rule);">
-                  <div
-                    class="text-ink flex h-32 w-32 items-center justify-center font-typewriter text-xs"
-                    style="background: repeating-conic-gradient(var(--paper-bg) 0% 25%, var(--paper-ink) 0% 50%) 50% / 16px 16px;">
-                    <span class="bg-paper text-ink px-2 py-1">QR&nbsp;CODE</span>
-                  </div>
+                  {{ $img := resources.Get "images/signal-qr.jpeg" }}
+                  {{ if $img }}
+                    {{ $resized := $img.Fit "192x192" }}
+                    <a href="{{ $ch.qr_url }}" rel="noopener">
+                      <img src="{{ $resized.RelPermalink }}" alt="Signal group QR code" class="h-32 w-32" width="192" height="192" />
+                    </a>
+                  {{ end }}
                   <p class="text-muted text-center font-typewriter text-xs">
-                    Signal QR code coming soon
+                    Scan to join our Signal group
                   </p>
                 </div>
               {{ end }}

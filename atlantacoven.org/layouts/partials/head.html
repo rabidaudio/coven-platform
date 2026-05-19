@@ -32,7 +32,7 @@
 
 <link rel="canonical" href="{{ .Permalink }}" />
 
-{{ $style := resources.Get "css/style.css" | css.PostCSS (dict "inlineImports" true) }}
+{{ $style := resources.Get "css/style.css" | css.TailwindCSS (dict "minify" hugo.IsProduction "optimize" hugo.IsProduction) }}
 {{ if hugo.IsProduction }}
   {{ $style = $style | minify | fingerprint }}
 {{ else }}

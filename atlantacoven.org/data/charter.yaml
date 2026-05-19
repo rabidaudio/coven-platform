@@ -19,11 +19,12 @@ preamble: >-
   organization at its inception.
 
 founders:
-  - Julien
-  - Maddie C
-  - Maddie Y
-  - Natalie
-  - Sophie
+  - name: Julien
+  - name: Maddie C
+  - name: Maddie Y
+    url: https://madelyn.sh
+  - name: Natalie
+  - name: Sophie
 
 mission: >-
   The Coven exists as a collaborative space for trans creators, focused on
@@ -64,29 +65,35 @@ tiers:
 legal: >-
   The Coven operates as a sole proprietorship under Julien (DBA The Coven).
   Julien acts as financial and legal liaison for lease purposes unless
-  otherwise restructured.
+  otherwise mentioned.
 
 financial:
   - Founders maintain the lease and core utilities regardless of member count
   - Membership funds offset shared expenses and fund future improvements
-  - First and last month rent paid upfront; rent due the 1st via PayPal, Venmo, or cash
   - Julien as lease holder receives funds and pays the landlord
 
 governance:
   - section: "5.1"
+    title: Do-ocracy (Founders)
+    points:
+      - Founders govern by do-ocracy (lazy consensus) — the person who cares takes initiative, and the action stands if no one objects
+      - This is a decentralized, horizontal model where initiative is encouraged and actions are taken voluntarily, guided by consent rather than command
+      - Any founder may act on behalf of The Coven; other founders may raise objections within a reasonable timeframe
+  - section: "5.2"
     title: Voting
     points:
+      - Formal voting is used when lazy consensus fails or for finances and policy changes
       - Each founder has one vote
       - Majority vote (≥3 of 5) required for finances, equipment, policy changes, and new members
       - Each founder retains veto power over new membership applications
       - Deadlocks may be tabled or resolved through structured discussion
-  - section: "5.2"
+  - section: "5.3"
     title: Leaving
     points:
       - A founder may leave at any time with 60 days written notice
       - A plan for transitioning responsibilities and financial share will be agreed upon
       - Replacing a founder requires majority approval of remaining founders
-  - section: "5.3"
+  - section: "5.4"
     title: Equipment Ownership
     points:
       - Equipment brought in by founders/members remains their property unless explicitly donated

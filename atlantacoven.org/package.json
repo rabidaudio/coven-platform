@@ -10,6 +10,7 @@
     "lint": "npm run format:check && npm run lint:css"
   },
   "devDependencies": {
+    "@tailwindcss/cli": "^4.3.0",
     "@tailwindcss/postcss": "^4.1.4",
     "postcss": "^8.5.3",
     "postcss-cli": "^11.0.1",
@@ -20,5 +21,8 @@
     "stylelint": "^16.10.0",
     "stylelint-config-standard": "^36.0.1",
     "tailwindcss": "^4.1.4"
+  },
+  "dependencies": {
+    "lightningcss": "^1.32.0"
   }
 }

@@ -96,10 +96,11 @@
     - q: How is The Coven governed?
       type: list
       a: |
-        - Each founder has one vote on financial, equipment, and policy decisions
-        - Majority vote (≥3 of 5) required for most decisions
+        - Founders govern by do-ocracy (lazy consensus) — the person who cares takes initiative, and the action stands if no one objects
+        - Formal voting is used when lazy consensus fails or for finances and policy changes
+        - Each founder has one vote; majority vote (≥3 of 5) required for finances, equipment, policy changes, and new members
         - Each founder retains veto power regarding new members
-        - Founders meet at least once per month
+        - Founders meet ad hoc, with coordination happening over Signal
     - q: How is The Coven funded?
       type: list
       a: |

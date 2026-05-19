@@ -1,0 +1,42 @@
+name: Firmware CI
+
+# Disabled for now — re-enable by restoring the pull_request trigger below.
+on:
+  workflow_dispatch:
+  # pull_request:
+  #   paths:
+  #     - "firmware/**"
+  #     - ".github/workflows/firmware-ci.yml"
+
+defaults:
+  run:
+    working-directory: firmware
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Cache PlatformIO
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.platformio/.cache
+            ~/.cache/pip
+          key: ${{ runner.os }}-pio-${{ hashFiles('firmware/platformio.ini') }}
+          restore-keys: |
+            ${{ runner.os }}-pio-
+
+      - name: Install PlatformIO
+        run: pip install --upgrade platformio
+
+      - name: Build firmware
+        run: pio run

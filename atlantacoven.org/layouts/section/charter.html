@@ -34,7 +34,8 @@
           §1 · Founding Members
         </h2>
         <div class="flex flex-wrap gap-4">
-          {{ range $i, $name := . }}
+          {{ range $i, $f := . }}
+            {{ $name := $f.name }}
             {{ $stamps := slice "pink" "spot-cyan" "acid" "ink" }}
             {{ $sc := index $stamps (mod $i 4) }}
             {{ $tilt := index (slice "tilt-n1" "tilt-1" "tilt-n2" "tilt-2") (mod $i 4) }}
@@ -50,9 +51,15 @@
                 style="width:2.2rem;height:2.2rem;font-size:1.2rem;"
                 >{{ substr $name 0 1 }}</span
               >
-              <span class="text-ink font-display text-base tracking-wide uppercase"
-                >{{ $name }}</span
-              >
+              {{ if $f.url }}
+                <a href="{{ $f.url }}" class="text-ink font-display text-base tracking-wide uppercase hover:text-pink" rel="noopener"
+                  >{{ $name }}</a
+                >
+              {{ else }}
+                <span class="text-ink font-display text-base tracking-wide uppercase"
+                  >{{ $name }}</span
+                >
+              {{ end }}
             </div>
           {{ end }}
         </div>

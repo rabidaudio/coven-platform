@@ -1,0 +1,28 @@
+name: Scripts CI
+
+on:
+  pull_request:
+    paths:
+      - "scripts/**"
+      - "go.mod"
+      - "go.sum"
+      - ".github/workflows/scripts-ci.yml"
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Build
+        run: go build ./scripts/...
+
+      - name: Test
+        run: go test ./scripts/...

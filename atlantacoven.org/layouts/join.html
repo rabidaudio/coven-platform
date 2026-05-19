@@ -46,7 +46,7 @@
               {{ end }} {{ $tilt }} bg-paper-2 relative p-5">
               {{ with $t.badge }}
                 <div class="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <span class="zine-stamp stamp-{{ $sc }}">{{ . }}</span>
+                  <span class="zine-stamp" style="background: var(--spot-{{ $sc }}); color: var(--paper-bg); border-color: var(--spot-{{ $sc }});">{{ . }}</span>
                 </div>
               {{ end }}
               <div class="text-{{ $sc }} font-display text-sm tracking-wider uppercase">

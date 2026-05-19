@@ -59,13 +59,17 @@
   }
 }
 
+html {
+  font-size: 15px;
+}
+
 body {
   font-family: var(--font-typewriter);
   background: var(--paper-bg);
   color: var(--paper-ink);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  font-size: 16px;
+  font-size: 1rem;
   line-height: 1.55;
 }
 
@@ -413,6 +417,12 @@ button:focus-visible {
 
 .stamp-flat {
   transform: none;
+}
+
+@media (width >= 768px) {
+  #mobile-menu-btn {
+    display: none;
+  }
 }
 
 /* Single-letter chunky stamp used to replace icon-in-square pattern */

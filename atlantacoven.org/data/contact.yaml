@@ -12,7 +12,8 @@ channels:
       to reach us — most messages get a response within a day.
     response: Usually within 24 hours
     color: cyan
-    qr_placeholder: true
+    qr_image: true
+    qr_url: "https://signal.group/#CjQKID3LxqykDZsQZywnkVzItuymylzt8QWrUp6b9Ot3xP2xEhArqMnDDXMQylH9Dk-7uc__"
 
   - kind: email
     name: Email
