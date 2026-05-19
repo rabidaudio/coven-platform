@@ -1,6 +1,7 @@
 package users
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/atlantacoven/coven-platform/member-site/api"
@@ -29,7 +30,7 @@ func postSession(w http.ResponseWriter, r *http.Request) {
 	}
 
 	u, err := AuthenticatePassword(ctx, body.Email, body.Password)
-	if err == ErrInvalidPassword {
+	if errors.Is(err, ErrInvalidPassword) || errors.Is(err, ErrNotFound) {
 		api.RespondBadFormat(w, err)
 		return
 	} else if err != nil {

@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
+
 import 'package:http/http.dart' as http;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class ApiResponse<T> {
   final String status;
@@ -75,8 +77,8 @@ class ApiException extends HttpException {
     this.body,
   }) : super(message, uri: response.request?.url);
 
-  factory ApiException.fromResponse(http.Response response) {
-    if (response.headers["Content-Type"] != "application/json") {
+  factory ApiException.fromResponse(var response) {
+    if (response.headers["content-type"] != "application/json") {
       return ApiException(
         "HTTP status ${response.statusCode}",
         response: response,
@@ -94,14 +96,16 @@ class Api {
 
   Api({required this.baseUrl});
 
-  static Encoding JSON = Encoding.getByName("application/json")!;
+  static Api main() {
+    return Api(baseUrl: dotenv.get('API_URL'));
+  }
 
   Future<ApiResponse<T>> get<T>(
     String path, {
     Map<String, dynamic>? queryParams,
     required T Function(Map<String, dynamic>) fromJson,
   }) async {
-    http.Response res = await http.get(_uri(path, queryParams: queryParams));
+    var res = await http.get(_uri(path, queryParams: queryParams));
     return ApiResponse.fromResponse(res, fromJson);
   }
 
@@ -110,7 +114,7 @@ class Api {
     Map<String, dynamic>? queryParams,
     required T Function(Map<String, dynamic>) fromJson,
   }) async {
-    http.Response res = await http.get(_uri(path, queryParams: queryParams));
+    var res = await http.get(_uri(path, queryParams: queryParams));
     return ApiPageResponse.fromResponse(res, fromJson);
   }
 
@@ -120,10 +124,16 @@ class Api {
     Object? body,
     required T Function(Map<String, dynamic>) fromJson,
   }) async {
-    http.Response res = await http.put(
+    Map<String, String> headers = {};
+    var bodyStr = "";
+    if (body != null) {
+      bodyStr = jsonEncode(body);
+      headers['Content-Type'] = "application/json";
+    }
+    var res = await http.put(
       _uri(path, queryParams: queryParams),
-      body: body,
-      encoding: JSON,
+      body: bodyStr,
+      headers: headers,
     );
     return ApiResponse.fromResponse(res, fromJson);
   }
@@ -134,10 +144,16 @@ class Api {
     Object? body,
     required T Function(Map<String, dynamic>) fromJson,
   }) async {
-    http.Response res = await http.post(
+    Map<String, String> headers = {};
+    var bodyStr = "";
+    if (body != null) {
+      bodyStr = jsonEncode(body);
+      headers['Content-Type'] = "application/json";
+    }
+    var res = await http.post(
       _uri(path, queryParams: queryParams),
-      body: body,
-      encoding: JSON,
+      body: bodyStr,
+      headers: headers,
     );
     return ApiResponse.fromResponse(res, fromJson);
   }
@@ -148,10 +164,9 @@ class Api {
     Object? body,
     required T Function(Map<String, dynamic>) fromJson,
   }) async {
-    http.Response res = await http.delete(
+    var res = await http.delete(
       _uri(path, queryParams: queryParams),
       body: body,
-      encoding: JSON,
     );
     return ApiResponse.fromResponse(res, fromJson);
   }

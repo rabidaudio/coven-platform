@@ -11,7 +11,7 @@ import (
 // If deserialization fails, it will automatically render the error and return false.
 func UnmarshalBody[T any](w http.ResponseWriter, r *http.Request, out *T) bool {
 	if err := json.NewDecoder(r.Body).Decode(out); err != nil {
-		RespondBadFormat(w, fmt.Errorf("invalid request body"))
+		RespondBadFormat(w, fmt.Errorf("invalid request body: %w", err))
 		return false
 	}
 	return true

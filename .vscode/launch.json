@@ -5,10 +5,22 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "name": "Launch Membersite",
+      "type": "go",
+      "request": "launch",
+      "mode": "auto",
+      "program": "${workspaceFolder}/member-site"
+    },
+    {
       "name": "PlatformIO Debugger",
       "request": "launch",
       "type": "platformio-debug",
       "toolchainBinDir": "/usr/local/bin"
+    },
+    {
+        "name": "Flutter",
+        "request": "launch",
+        "type": "dart",
     }
   ]
 }

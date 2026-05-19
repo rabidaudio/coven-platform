@@ -13,8 +13,12 @@ const (
 	Production  Environment = "production"
 )
 
+func looksLikeTest() bool {
+	return strings.HasSuffix(os.Args[0], ".test") || (len(os.Args) > 1 && os.Args[1] == "-test.run")
+}
+
 func Env() Environment {
-	if strings.HasSuffix(os.Args[0], ".test") || os.Args[1] == "-test.run" {
+	if looksLikeTest() {
 		return Test
 	}
 	v := os.Getenv("APP_ENV")

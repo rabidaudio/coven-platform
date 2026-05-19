@@ -78,6 +78,7 @@ func RespondError(w http.ResponseWriter, err error) {
 		Status: "ERROR",
 		Error:  &r,
 	}
+	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(r.Code) // send the error code
 	MarshalBody(w, &ar)
 }
