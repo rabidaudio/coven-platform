@@ -1,23 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_keychain/flutter_keychain.dart';
 
 import '../api.dart';
-import '../models/user.dart';
 import 'styles.dart';
 
 class LoginViewModel extends ChangeNotifier {
-  User? user;
   Exception? error;
+  bool isLoggedIn = false;
   bool isLoading = false;
 
   Future<void> load(String email, String password) async {
+    error = null;
     isLoading = true;
     notifyListeners();
 
     try {
-      user = await _login(email, password);
-      error = null;
+      await _login(email, password);
+      isLoggedIn = true;
     } on Exception catch (e) {
-      user = null;
+      isLoggedIn = false;
       error = e;
     } finally {
       isLoading = false;
@@ -25,15 +26,17 @@ class LoginViewModel extends ChangeNotifier {
     }
   }
 
-  Future<User> _login(String email, String password) async {
+  Future<void> _login(String email, String password) async {
     Api api = Api(baseUrl: "http://localhost:8080");
     Map<String, dynamic> body = {"email": email, "password": password};
-    ApiResponse<User> res = await api.post(
-      "/session",
-      body: body,
-      fromJson: User.fromJson,
-    );
-    return res.data;
+      ApiResponse<String> res = await api.post(
+        "/session",
+        body: body,
+        fromJson: (body) {
+          return body["token"] as String;
+        },
+      );
+      await FlutterKeychain.put(key: "user_token", value: res.data);
   }
 }
 
