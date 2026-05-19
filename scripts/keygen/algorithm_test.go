@@ -42,11 +42,10 @@ func (s *Server) GenerateUserToken(uid int) []byte {
 
 	token := tlvwt.Token{}
 	token.SetType("TWT")
-
 	token.SetIssuer(DOMAIN)
 	token.SetExpiration(expires)
 	tlvwt.TLVMessage(token).SetUInt64("uid", uint64(uid))
-	msg, err := token.SignAndEncodeString(Ed25519Algorithm{key: s.privateKey})
+	msg, err := token.SignAndEncodeString(tlvwt.Ed25519Algorithm{Key: s.privateKey})
 	if err != nil {
 		panic(err)
 	}
@@ -87,7 +86,7 @@ func (dl *DoorLock) GenerateChallenge() []byte {
 		"nce": dl.nonce,
 		"pub": dl.recvKey.PublicKey().Bytes(),
 	}
-	data, err := challenge.SignAndEncodeString(Ed25519Algorithm{key: dl.privateKey})
+	data, err := challenge.SignAndEncodeString(tlvwt.Ed25519Algorithm{Key: dl.privateKey})
 	if err != nil {
 		panic(err)
 	}
@@ -118,7 +117,9 @@ func (dl *DoorLock) DecodeEncryptedToken(data []byte) []byte {
 }
 
 func (dl *DoorLock) VerifyToken(token []byte, serverpub ed25519.PublicKey) int {
-	tmsg, err := Ed25519Algorithm{}.Verify(token, serverpub)
+	tmsg, err := tlvwt.VerifyAndExtractToken(token, func(msg, sig []byte) bool {
+		return ed25519.Verify(serverpub, msg, sig)
+	})
 	if err != nil {
 		panic(err)
 	}
@@ -142,7 +143,9 @@ type App struct {
 }
 
 func (a *App) EncryptToken(challenge, doorpub []byte) []byte {
-	ch, err := Ed25519Algorithm{}.Verify(challenge, doorpub)
+	ch, err := tlvwt.VerifyAndExtractToken(challenge, func(msg, sig []byte) bool {
+		return ed25519.Verify(doorpub, msg, sig)
+	})
 	if err != nil {
 		panic(err)
 	}
@@ -195,36 +198,8 @@ func TestAlgorithm(t *testing.T) {
 	assert.Equal(t, uid, userId)
 }
 
-
 func GenerateNonce() []byte {
 	b := make([]byte, NonceSize)
 	rand.Read(b)
 	return b
-}
-
-
-type Ed25519Algorithm struct{
-	key ed25519.PrivateKey
-}
-
-func (Ed25519Algorithm) Tag(t tlvwt.Token) {
-	t.SetAlgorithm("ed25519")
-}
-
-func (a Ed25519Algorithm) Sign(msg []byte) ([]byte, error) {
-	return ed25519.Sign(a.key, msg), nil
-}
-
-func (a Ed25519Algorithm) Verify(msg []byte, pub []byte) (tlvwt.TLVMessage, error) {
-	tmsg, err := tlvwt.DecodeString(msg)
-	if err != nil {
-		return nil, err
-	}
-	sig := tmsg["sig"]
-
-	l := len(msg) - len(sig) - 4
-	if !ed25519.Verify(pub, msg[0:l], sig) {
-		return nil, fmt.Errorf("invalid signature")
-	}
-	return tmsg, nil
 }

@@ -2,14 +2,12 @@ package space.thecoven.android
 
 import android.util.Log
 import org.bouncycastle.crypto.hpke.HPKE
-import org.bouncycastle.math.ec.rfc8032.Ed25519
 import java.security.KeyFactory
 import java.security.Signature
 import java.security.spec.X509EncodedKeySpec
-import kotlin.jvm.Throws
 
 
-class Authenticator(val doorSigningPubKey: ByteArray) {
+class Authenticator(val doorSigningPubKey: ByteArray, val infoField: ByteArray) {
 
     // NOTE: when minSdk is 37 we can use the native Android libs for this instead of bouncycastle
     private val hpke = HPKE(
@@ -19,47 +17,37 @@ class Authenticator(val doorSigningPubKey: ByteArray) {
         HPKE.aead_AES_GCM128
     )
 
-    companion object {
-        const val UINT64_SIZE = 8
-        const val CHALLENGE_SIZE = UINT64_SIZE + Ed25519.SIGNATURE_SIZE
-        const val NONCE_SIZE = UINT64_SIZE
-
-        val INFO_FIELD = "thecoven.space".encodeToByteArray()
-    }
-
-    sealed class ChallengeResult {
-        object InvalidSignature : ChallengeResult()
-        class ValidSignature(val nonce: ByteArray) : ChallengeResult()
-    }
-
     @Throws(SecurityException::class)
-    fun verifyChallenge(challenge: ByteArray): ChallengeResult {
-        val nonce = challenge.copyOfRange(0, NONCE_SIZE)
-        val signature = challenge.copyOfRange(NONCE_SIZE, challenge.size)
+    fun verifyChallengeAndEncryptToken(challenge: ByteArray, token: ByteArray): ByteArray {
+        val challengeData = try {
+            TLV.decode(challenge)
+        } catch (e: IllegalArgumentException) {
+            throw SecurityException("Invalid Challenge", e)
+        }
+        val signature = challengeData["sig"] ?: throw SecurityException("Invalid Challenge: sig")
+        val signedMessage = challenge.copyOfRange(0, challenge.size - signature.size - 4)
 
         val keyspec = X509EncodedKeySpec(doorSigningPubKey)
         val key = KeyFactory.getInstance("Ed25519").generatePublic(keyspec)
         val sig = Signature.getInstance("Ed25519")
         sig.initVerify(key)
-        sig.update(nonce)
+        sig.update(signedMessage)
         val valid = sig.verify(signature)
-        if (valid) {
-            return ChallengeResult.ValidSignature(nonce)
-        } else {
-            return ChallengeResult.InvalidSignature
+        if (!valid) {
+            throw SecurityException("Invalid signature")
         }
-    }
+        val nonce = challengeData["nce"] ?: throw SecurityException("Invalid Challenge: nce")
+        val pubkey = challengeData["pub"] ?: throw SecurityException("Invalid Challenge: pub")
 
-    fun authenticate(nonce: ByteArray, userSecret: ByteArray, pubkey: ByteArray): ByteArray {
-        val plaintext = nonce + userSecret
+        Log.d("CRYPTO", "nonce=${nonce.toHexString()}")
+        Log.d("CRYPTO", "pkR=${pubkey.toHexString()}")
 
-//        val skS = hpke.generatePrivateKey()
-//        val senderPublicKey = hpke.serializePublicKey(skS.public)
+        val plaintext = nonce + token
 
         val pkR = hpke.deserializePublicKey(pubkey)
         val aar = byteArrayOf() // empty
         val result = hpke.seal(pkR,
-            INFO_FIELD, aar,
+            infoField, aar,
             plaintext,
             null, null, // PSK (unused)
             null)
@@ -68,7 +56,6 @@ class Authenticator(val doorSigningPubKey: ByteArray) {
         val encapsulatedKey = result[1]
         Log.d("CRYPTO", "cipher=${cipherText.toHexString()}")
         Log.d("CRYPTO", "encapsulatedKey=${encapsulatedKey.toHexString()}")
-//        Log.d("CRYPTO", "pks=${senderPublicKey.toHexString()}")
-        return cipherText+encapsulatedKey
+        return encapsulatedKey+cipherText
     }
 }

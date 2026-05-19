@@ -1,6 +1,7 @@
 package tlvwt
 
 import (
+	"crypto/ed25519"
 	"crypto/sha256"
 	"hash"
 )
@@ -38,5 +39,15 @@ func HS256() SigningAlgorithm {
 	return &algoHMAC { sha: sha256.New, name: "HS256" }
 }
 
-// currently only signing is supported
-// TODO: support RSA
+// this algorithm is non-standard in JWT but we are using it
+type Ed25519Algorithm struct{
+	Key ed25519.PrivateKey
+}
+
+func (Ed25519Algorithm) Tag(t Token) {
+	t.SetAlgorithm("ed25519")
+}
+
+func (a Ed25519Algorithm) Sign(msg []byte) ([]byte, error) {
+	return ed25519.Sign(a.Key, msg), nil
+}

@@ -21,9 +21,12 @@ package tlvwt
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"time"
 )
+
+var ErrInvalidSignature = fmt.Errorf("invalid signature")
 
 type Token TLVMessage
 
@@ -116,4 +119,19 @@ func (t Token) SignAndEncodeString(sign SigningAlgorithm) ([]byte, error) {
 
 func (t Token) String() string {
 	return TLVMessage(t).String()
+}
+
+func VerifyAndExtractToken(tokendata []byte, verifyfn func (msg, sig []byte) bool) (t TLVMessage, err error) {
+	tmsg, err := DecodeString(tokendata)
+	if err != nil {
+		return nil, err
+	}
+	sig := tmsg["sig"]
+	// assumes sig is the last field as it's supposed to be
+	// TODO: support non-final field by re-encoding tmsg without sig
+	l := len(tokendata) - len(sig) - 4
+	if !verifyfn(tokendata[0:l], sig) {
+		return nil, ErrInvalidSignature
+	}
+	return tmsg, nil
 }

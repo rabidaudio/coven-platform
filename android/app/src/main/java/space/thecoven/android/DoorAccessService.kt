@@ -20,7 +20,7 @@ class DoorAccessService : HostApduService() {
 
     companion object {
         const val DOOR_UNLOCK_RESULT_CMD = 0xFA
-        val USER_SECRET = "0000000000001234aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa9e6c8031339b16f91f113fbb1c1272e7a64d0c587b22d5b52e28f04f633b3587f131b2473d3aa92e910e0b2bc6cda557844998aff5ea80e590f19c45ae479406".hexToByteArray() // STOPSHIP
+        val TEST_TOKEN = "616c67076564323535313965787008000000006a0a6f2e6973730e746865636f76656e2e7370616365747970035457547569640800000000000004d27369674059cb97cd8cf3695737567c175e27cff16050d520088c909308ace3ce4099ddcf14e14733fbb0a2a8adcc966eda922a3c42437282490065e3c568d0c192461802".hexToByteArray() // STOPSHIP
     }
 
     override fun onCreate() {
@@ -73,25 +73,16 @@ class DoorAccessService : HostApduService() {
                     }
 
                     IDCard.Command.GENERAL_AUTHENTICATE -> {
-                        val challenge = cmd.data.copyOfRange(0, Authenticator.CHALLENGE_SIZE)
-                        val pubKey = cmd.data.copyOfRange(Authenticator.CHALLENGE_SIZE, cmd.data.size)
+                        val challenge = cmd.data
                         Log.d("NFC", "challenge=${challenge.toHexString()}")
-                        Log.d("NFC", "pubKey=${pubKey.toHexString()}")
 
                         val doorPubSigningKey = getString(R.string.door_signing_pubkey).hexToByteArray()
-                        val auth = Authenticator(doorPubSigningKey)
+                        val info = getString(R.string.info).toByteArray()
+                        val auth = Authenticator(doorPubSigningKey, info)
 
                         try {
-                            val nonce = when (val res = auth.verifyChallenge(challenge)) {
-                                Authenticator.ChallengeResult.InvalidSignature ->
-                                    return IDCard.Status(0x66.toUByte(), 0x10.toUByte()).toResponse()
-                                is Authenticator.ChallengeResult.ValidSignature -> res.nonce
-                            }
-                            Log.d("NFC", "nonce=${nonce.toHexString()}")
-                            val accessKey = auth.authenticate(nonce, USER_SECRET, pubKey)
-                            Log.d("NFC", "accessKey=${accessKey.toHexString()}")
-
-                            return IDCard.ResponseAPDU(data = accessKey)
+                            val encryptedToken = auth.verifyChallengeAndEncryptToken(challenge, TEST_TOKEN)
+                            return IDCard.ResponseAPDU(data = encryptedToken)
                         } catch (e: Exception) {
                             Log.e("NFC", "Authentication Failed", e)
                             // Return a security error
