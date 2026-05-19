@@ -23,7 +23,7 @@ func main() {
 	if port == "" {
 		port = "8080"
 	}
-	addr := "localhost:" + port
+	addr := "0.0.0.0:" + port
 	fmt.Printf("Starting server on %v\n", addr)
 	if err := http.ListenAndServe(addr, NewServer(db)); err != nil {
 		panic(fmt.Errorf("start server: %v", err))

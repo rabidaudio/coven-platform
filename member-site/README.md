@@ -5,10 +5,13 @@ A backend webserver for managing users, written in Go.
 ```bash
 # run any pending migrations
 go run ./scripts/migrate up
-# start the server
-go run ./member-site
 # run test suite
 go test ./...
+# start the server
+go run ./member-site
+# for live reload on changes, use gow
+go install github.com/mitranim/gow@latest
+gow run ./member-site
 ```
 
 ## Development

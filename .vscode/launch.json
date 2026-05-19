@@ -16,11 +16,6 @@
       "request": "launch",
       "type": "platformio-debug",
       "toolchainBinDir": "/usr/local/bin"
-    },
-    {
-        "name": "Flutter",
-        "request": "launch",
-        "type": "dart",
     }
   ]
 }

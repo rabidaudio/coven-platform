@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:http/http.dart' as http;
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class ApiResponse<T> {
   final String status;
@@ -97,7 +96,11 @@ class Api {
   Api({required this.baseUrl});
 
   static Api main() {
-    return Api(baseUrl: dotenv.get('API_URL'));
+    final baseUrl = String.fromEnvironment(
+      'API_URL',
+      defaultValue: "https://api.thecoven.space",
+    );
+    return Api(baseUrl: baseUrl);
   }
 
   Future<ApiResponse<T>> get<T>(

@@ -1,3 +1,4 @@
+import 'package:app/ui/components/error_snackbar.dart';
 import 'package:logging/logging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_keychain/flutter_keychain.dart';
@@ -5,8 +6,7 @@ import 'package:flutter_keychain/flutter_keychain.dart';
 import '../api.dart';
 import 'styles.dart';
 
-class LoginViewModel extends ChangeNotifier {
-  Exception? error;
+class LoginViewModel extends ChangeNotifier with ErrorViewModel {
   bool isLoggedIn = false;
   bool isLoading = false;
 
@@ -14,7 +14,6 @@ class LoginViewModel extends ChangeNotifier {
     var existingToken = await FlutterKeychain.get(key: "user_token");
     Logger.root.log(Level.INFO, "token: ${existingToken}");
 
-    error = null;
     isLoading = true;
     notifyListeners();
 
@@ -22,9 +21,8 @@ class LoginViewModel extends ChangeNotifier {
       await _login(email, password);
       isLoggedIn = true;
     } on Exception catch (e) {
-      Logger.root.log(Level.SEVERE, "login error: ${e}");
+      pushError(e);
       isLoggedIn = false;
-      error = e;
     } finally {
       isLoading = false;
       notifyListeners();
@@ -62,52 +60,43 @@ class LoginPage extends StatelessWidget {
           padding: const EdgeInsets.all(8.0),
           child: ConstrainedBox(
             constraints: BoxConstraints(maxWidth: 300),
-            child: ListenableBuilder(
-              listenable: viewModel,
-              builder: (context, _) {
-                // if (viewModel.error != null) {
-                //   ScaffoldMessenger.of(context).showSnackBar(
-                //     SnackBar(
-                //       content: const Text(
-                //         'An error occurred, please try again later',
-                //       ),
-                //       duration: const Duration(seconds: 2),
-                //       behavior: SnackBarBehavior.floating,
-                //     ),
-                //   );
-                // }
-
-                if (viewModel.isLoading) {
-                  return const Center(child: CircularProgressIndicator());
-                } else {
-                  return Column(
-                    mainAxisAlignment: .center,
-                    children: [
-                      TextField(
-                        autofocus: true,
-                        decoration: Styles.textFieldDecoration.copyWith(
-                          hintText: "email",
+            child: SnackbarError(
+              vm: viewModel,
+              child: ListenableBuilder(
+                listenable: viewModel,
+                builder: (context, _) {
+                  if (viewModel.isLoading) {
+                    return const Center(child: CircularProgressIndicator());
+                  } else {
+                    return Column(
+                      mainAxisAlignment: .center,
+                      children: [
+                        TextField(
+                          autofocus: true,
+                          decoration: Styles.textFieldDecoration.copyWith(
+                            hintText: "email",
+                          ),
+                          controller: email,
                         ),
-                        controller: email,
-                      ),
-                      TextField(
-                        autofocus: true,
-                        decoration: Styles.textFieldDecoration.copyWith(
-                          hintText: "password",
+                        TextField(
+                          autofocus: true,
+                          decoration: Styles.textFieldDecoration.copyWith(
+                            hintText: "password",
+                          ),
+                          controller: password,
+                          obscureText: true,
                         ),
-                        controller: password,
-                        obscureText: true,
-                      ),
-                      TextButton(
-                        onPressed: () {
-                          viewModel.submit(email.text, password.text);
-                        },
-                        child: Text("Login"),
-                      ),
-                    ],
-                  );
-                }
-              },
+                        TextButton(
+                          onPressed: () {
+                            viewModel.submit(email.text, password.text);
+                          },
+                          child: Text("Login"),
+                        ),
+                      ],
+                    );
+                  }
+                },
+              ),
             ),
           ),
         ),
