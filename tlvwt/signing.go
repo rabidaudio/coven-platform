@@ -1,0 +1,42 @@
+package tlvwt
+
+import (
+	"crypto/sha256"
+	"hash"
+)
+
+type SigningAlgorithm interface {
+	Tag(t Token)
+	Sign(msg []byte) ([]byte, error)
+}
+
+type AlgoNone struct{}
+
+func (AlgoNone) Tag(t Token) {
+	t.SetAlgorithm("none")
+}
+
+func (AlgoNone) Sign(msg []byte) ([]byte, error) {
+	return []byte{}, nil
+}
+
+type algoHMAC struct{
+	sha func () hash.Hash
+	name string
+}
+
+func (a *algoHMAC) Tag(t Token) {
+	t.SetAlgorithm(a.name)
+}
+
+func (a *algoHMAC) Sign(msg []byte) ([]byte, error) {
+	h := a.sha()
+	return h.Sum(msg), nil
+}
+
+func HS256() SigningAlgorithm {
+	return &algoHMAC { sha: sha256.New, name: "HS256" }
+}
+
+// currently only signing is supported
+// TODO: support RSA
