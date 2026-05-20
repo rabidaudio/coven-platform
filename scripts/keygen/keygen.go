@@ -35,7 +35,7 @@ var INFO = DOMAIN
 // paths
 const serverSigningPath = "member-site/signing.pem"
 const firmwareIncludePath = "firmware/include/_keys.h"
-const androidResPath = "android/app/src/main/res/values/keys.xml"
+const androidResPath = "app/android/app/src/main/res/values/keys.xml"
 
 func main() {
 	log.Println("Generating new keys...")

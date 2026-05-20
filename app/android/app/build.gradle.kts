@@ -37,6 +37,16 @@ android {
             signingConfig = signingConfigs.getByName("debug")
         }
     }
+
+    packaging {
+        resources {
+            excludes.add("META-INF/**")
+        }
+    }
+}
+
+dependencies {
+    implementation("org.bouncycastle:bcprov-jdk18on:1.84")
 }
 
 flutter {
