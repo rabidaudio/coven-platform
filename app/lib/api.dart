@@ -2,25 +2,113 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:http/http.dart' as http;
+import 'package:logging/logging.dart';
 
-class ApiResponse<T> {
+class Api {
+  final String baseUrl;
+  final Logger _logger = Logger("API");
+
+  Api({required this.baseUrl});
+
+  static Api main() {
+    final baseUrl = const String.fromEnvironment(
+      'API_URL',
+      // defaultValue: "https://api.thecoven.space",
+    );
+    assert(baseUrl != "");
+    return Api(baseUrl: baseUrl);
+  }
+
+  Future<ApiResponse> request(
+    String method,
+    String path, {
+    Map<String, dynamic>? queryParams,
+    Map<String, String> headers = const {},
+    Object? body,
+  }) async {
+    final url = _uri(path, queryParams: queryParams);
+    final req = http.Request(method, url);
+    req.headers.addAll(headers);
+    if (body is String) {
+      req.body = body;
+    } else {
+      // TODO: other types?
+      req.body = jsonEncode(body);
+      req.headers['Content-Type'] = "application/json";
+    }
+    final res = await req.send();
+    _logger.log(
+      Level.INFO,
+      "API: ${method.toUpperCase()} $url -- [${res.statusCode}] size:${res.contentLength}",
+    );
+    final resBody = await res.stream.bytesToString();
+    return ApiResponse(res, resBody);
+  }
+
+  Uri _uri(String path, {Map<String, dynamic>? queryParams}) {
+    return Uri.parse(baseUrl + path).replace(queryParameters: queryParams);
+  }
+}
+
+class ApiResponse {
+  final http.StreamedResponse _response;
+  final String _responseBody;
+
+  ApiResponse(this._response, this._responseBody);
+
+  ApiSingleResponse<T> single<T>({
+    required T Function(Map<String, dynamic>) fromJson,
+  }) {
+    if (_response.statusCode >= 400) {
+      throw _error();
+    }
+    final body = _parseBody();
+    assert(body["status"] is String);
+    assert(body["data"] is Map<String, dynamic>);
+    return ApiSingleResponse(body["status"], fromJson(body["data"]));
+  }
+
+  ApiPageResponse<T> many<T>({
+    required T Function(Map<String, dynamic>) fromJson,
+  }) {
+    if (_response.statusCode >= 400) {
+      throw _error();
+    }
+    final body = _parseBody();
+    Pagination? pagination;
+    if (body["pagination"] != null) {
+      assert(body["pagination"] is Map<String, dynamic>);
+      pagination = Pagination.fromJson(body["pagination"]);
+    }
+    assert(body["status"] is String);
+    assert(body["data"] is List<Map<String, dynamic>>);
+    List<T> data = body["data"].map((v) => fromJson(v)).toList();
+    return ApiPageResponse(body["status"], data, pagination);
+  }
+
+  ApiException _error() {
+    if (_response.headers["content-type"] != "application/json") {
+      return ApiException(
+        "HTTP status ${_response.statusCode}",
+        response: _response,
+      );
+    }
+    final body = _parseBody();
+    assert(body["status"] == "ERROR");
+    assert(body["error"] is Map<String, dynamic>);
+    String message = body["error"]["message"];
+    return ApiException(message, response: _response, body: body);
+  }
+
+  Map<String, dynamic> _parseBody() {
+    return json.decode(_responseBody) as Map<String, dynamic>;
+  }
+}
+
+class ApiSingleResponse<T> {
   final String status;
   final T data;
-
-  ApiResponse(this.status, this.data);
-
-  factory ApiResponse.fromResponse(
-    http.Response response,
-    T Function(Map<String, dynamic>) fromJson,
-  ) {
-    if (response.statusCode >= 400) {
-      throw ApiException.fromResponse(response);
-    }
-    Map<String, dynamic> body =
-        json.decode(response.body) as Map<String, dynamic>;
-
-    return ApiResponse(body["status"], fromJson(body["data"]));
-  }
+  ApiSingleResponse(this.status, this.data);
 }
 
 class ApiPageResponse<T> {
@@ -29,25 +117,6 @@ class ApiPageResponse<T> {
   final Pagination? pagination;
 
   ApiPageResponse(this.status, this.data, this.pagination);
-
-  factory ApiPageResponse.fromResponse(
-    http.Response response,
-    T Function(Map<String, dynamic>) fromJson,
-  ) {
-    if (response.statusCode >= 400) {
-      throw ApiException.fromResponse(response);
-    }
-    Map<String, dynamic> body =
-        json.decode(response.body) as Map<String, dynamic>;
-    Pagination? pagination;
-    if (body["pagination"] != null) {
-      pagination = Pagination.fromJson(body["pagination"]);
-    }
-
-    assert(body["data"] is List<Map<String, dynamic>>);
-    List<T> data = body["data"].map((v) => fromJson(v)).toList();
-    return ApiPageResponse(body["status"], data, pagination);
-  }
 }
 
 class Pagination {
@@ -67,114 +136,12 @@ class Pagination {
 }
 
 class ApiException extends HttpException {
-  final http.Response response;
+  final http.StreamedResponse response;
   final Map<String, dynamic>? body;
 
   ApiException(
     String message, {
-    required http.Response this.response,
+    required http.StreamedResponse this.response,
     this.body,
   }) : super(message, uri: response.request?.url);
-
-  factory ApiException.fromResponse(var response) {
-    if (response.headers["content-type"] != "application/json") {
-      return ApiException(
-        "HTTP status ${response.statusCode}",
-        response: response,
-      );
-    }
-    Map<String, dynamic> body =
-        json.decode(response.body) as Map<String, dynamic>;
-    String message = body["error"]["message"];
-    return ApiException(message, response: response, body: body);
-  }
-}
-
-class Api {
-  final String baseUrl;
-
-  Api({required this.baseUrl});
-
-  static Api main() {
-    final baseUrl = String.fromEnvironment(
-      'API_URL',
-      defaultValue: "https://api.thecoven.space",
-    );
-    return Api(baseUrl: baseUrl);
-  }
-
-  Future<ApiResponse<T>> get<T>(
-    String path, {
-    Map<String, dynamic>? queryParams,
-    required T Function(Map<String, dynamic>) fromJson,
-  }) async {
-    var res = await http.get(_uri(path, queryParams: queryParams));
-    return ApiResponse.fromResponse(res, fromJson);
-  }
-
-  Future<ApiPageResponse<T>> getMany<T>(
-    String path, {
-    Map<String, dynamic>? queryParams,
-    required T Function(Map<String, dynamic>) fromJson,
-  }) async {
-    var res = await http.get(_uri(path, queryParams: queryParams));
-    return ApiPageResponse.fromResponse(res, fromJson);
-  }
-
-  Future<ApiResponse<T>> put<T>(
-    String path, {
-    Map<String, dynamic>? queryParams,
-    Object? body,
-    required T Function(Map<String, dynamic>) fromJson,
-  }) async {
-    Map<String, String> headers = {};
-    var bodyStr = "";
-    if (body != null) {
-      bodyStr = jsonEncode(body);
-      headers['Content-Type'] = "application/json";
-    }
-    var res = await http.put(
-      _uri(path, queryParams: queryParams),
-      body: bodyStr,
-      headers: headers,
-    );
-    return ApiResponse.fromResponse(res, fromJson);
-  }
-
-  Future<ApiResponse<T>> post<T>(
-    String path, {
-    Map<String, dynamic>? queryParams,
-    Object? body,
-    required T Function(Map<String, dynamic>) fromJson,
-  }) async {
-    Map<String, String> headers = {};
-    var bodyStr = "";
-    if (body != null) {
-      bodyStr = jsonEncode(body);
-      headers['Content-Type'] = "application/json";
-    }
-    var res = await http.post(
-      _uri(path, queryParams: queryParams),
-      body: bodyStr,
-      headers: headers,
-    );
-    return ApiResponse.fromResponse(res, fromJson);
-  }
-
-  Future<ApiResponse<T>> delete<T>(
-    String path, {
-    Map<String, dynamic>? queryParams,
-    Object? body,
-    required T Function(Map<String, dynamic>) fromJson,
-  }) async {
-    var res = await http.delete(
-      _uri(path, queryParams: queryParams),
-      body: body,
-    );
-    return ApiResponse.fromResponse(res, fromJson);
-  }
-
-  Uri _uri(String path, {Map<String, dynamic>? queryParams}) {
-    return Uri.parse(baseUrl + path).replace(queryParameters: queryParams);
-  }
 }

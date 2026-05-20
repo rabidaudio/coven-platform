@@ -28,8 +28,13 @@ var registerName = register.String("name", "", "the name of the user")
 var registerEmail = register.String("email", "", "the email address of the user (required)")
 var registerPassword = register.String("pass", "", "the password for the user. if not set, generates a random one")
 
+// var resetpwd = flag.NewFlagSet("resetpwd", flag.ExitOnError)
+// var resetpwdEmail = register.String("email", "", "the email address of the user (required)")
+// var resetpwdPassword = register.String("pass", "", "the password for the user. if not set, generates a random one")
+
 var cmds = []*flag.FlagSet{
 	register,
+	// resetpwd,
 }
 
 func main() {
@@ -50,6 +55,10 @@ func main() {
 	case "register":
 		register.Parse(os.Args[2:])
 		Register(ctx)
+
+	// case "resetpwd":
+	// 	resetpwd.Parse(os.Args[2:])
+	// 	ResetPassword(ctx)
 
 	default:
 		fmt.Println("unknown command")
