@@ -1,5 +1,6 @@
 package space.thecoven.android
 
+import android.content.Context
 import android.content.IntentFilter
 import android.nfc.NfcManager
 import android.os.Build
@@ -13,13 +14,51 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.DefaultLifecycleObserver
+import androidx.lifecycle.LifecycleObserver
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.consumeAsFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import space.thecoven.android.ui.theme.TheCovenTheme
 
 class MainActivity : ComponentActivity() {
 
-    val br = NFCStateBroadcastReceiver()
+    class StateViewModel : ViewModel() {
+//        var state by mutableStateOf("unknown")
+
+        val br = NFCStateBroadcastReceiver()
+
+        val state = br.channel.consumeAsFlow()
+            .map { it.name }
+            .stateIn(
+            viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = "unknown"
+        )
+        fun register(context: ComponentActivity) {
+//            br.handler = { state = it.name }
+            context.registerReceiver(br, IntentFilter())
+            context.lifecycle.addObserver(object : DefaultLifecycleObserver{
+                override fun onDestroy(owner: LifecycleOwner) {
+                    context.unregisterReceiver(br)
+//                    br.handler = null
+                }
+            })
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -38,33 +77,29 @@ class MainActivity : ComponentActivity() {
                 Log.d("NFC", "antenna_x=${antenna.locationX} antenna_y=${antenna.locationY}")
             }
         }
-        registerReceiver(br, IntentFilter())
 
-        // TODO br.channel.receive
+        val vm = StateViewModel()
+        vm.register(this)
 
         enableEdgeToEdge()
         setContent {
             TheCovenTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     Greeting(
-                        name = "Android",
+                        statusVM = vm,
                         modifier = Modifier.padding(innerPadding)
                     )
                 }
             }
         }
     }
-
-    override fun onDestroy() {
-        unregisterReceiver(br)
-        super.onDestroy()
-    }
 }
 
 @Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
+fun Greeting(statusVM: MainActivity.StateViewModel, modifier: Modifier = Modifier) {
+    val state = statusVM.state.collectAsStateWithLifecycle()
     Text(
-        text = "Hello $name!",
+        text = "Status: ${state.value}",
         modifier = modifier
     )
 }
@@ -73,6 +108,6 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
 @Composable
 fun GreetingPreview() {
     TheCovenTheme {
-        Greeting("Android")
+        Greeting(MainActivity.StateViewModel())
     }
 }

@@ -103,15 +103,17 @@ func (dl *DoorLock) DecodeEncryptedToken(data []byte) []byte {
 		panic(err)
 	}
 	dec, err := r.Open(nil, ct)
+	if err != nil {
+		panic(err)
+	}
 	nonce := dec[0:NonceSize]
 	fmt.Printf("Nonce[%v]: %x\n", len(nonce), nonce)
 	if subtle.ConstantTimeCompare(nonce, dl.nonce) != 1 {
 		panic("invalid nonce")
 	}
-	if err != nil {
-		panic(err)
-	}
-	token := dec[NonceSize:]
+	decryptedSize := int(dec[NonceSize])
+	fmt.Printf("TokenSize: %x\n", decryptedSize)
+	token := dec[NonceSize+1:]
 	fmt.Printf("TokenData[%v]: %x\n", len(token), token)
 	return token
 }
@@ -162,6 +164,7 @@ func (a *App) EncryptToken(challenge, doorpub []byte) []byte {
 	fmt.Printf("Enc[%v]: %x\n", len(enc), enc)
 	var msg []byte
 	msg = append(msg, nonce...)
+	msg = append(msg, byte(len(a.token)))
 	msg = append(msg, a.token...)
 	ct, err := s.Seal(nil, msg)
 	if err != nil {

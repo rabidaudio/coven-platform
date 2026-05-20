@@ -28,6 +28,15 @@ int constantCompare(uint8_t* a, uint8_t* b, size_t len) {
   return compareSum;
 }
 
+uint64_t readLongBE(uint8_t* src) {
+  uint64_t result = 0;
+  for (size_t i = 0; i < 8; i++) {
+    result <<= 8;
+    result |= (uint64_t)src[i];
+  }
+  return result;
+}
+
 class KeyVerification {
   WC_RNG kv_rng[1];
   ed25519_key server_sign_pub_key;
@@ -136,18 +145,30 @@ public:
     if (constantCompare(_decryptedMessage, _nonce, NONCE_SIZE) != 0) {
       return 10; // invalid nonce
     }
-    uint8_t* tokendata = _decryptedMessage + NONCE_SIZE;
-    // TODO: we don't know the actual message size, but it should be safe
-    // to-over estimate it to capacity.
-    TLVMessage message = TLVMessage(tokendata, DECRYPTED_MESSAGE_CAPACITY,
-                                    DECRYPTED_MESSAGE_CAPACITY);
+
+    uint8_t decryptedSize = _decryptedMessage[NONCE_SIZE];
+
+    uint8_t* tokendata = _decryptedMessage + NONCE_SIZE + 1;
+    TLVMessage message =
+        TLVMessage(tokendata, decryptedSize, DECRYPTED_MESSAGE_CAPACITY);
+
+    // uint8_t* alg;
+    // uint8_t algSize;
+    // if (message.getTag("alg", &alg, &algSize)) {
+    //   if (algSize != 7 || memcmp(alg, "Ed25519", 7) != 0) {
+    //     return 15; // unsupported alg
+    //   }
+    // }
 
     uint8_t* sig;
-    if (!message.getTag("sig", &sig, NULL)) {
+    uint8_t sigLen;
+    if (!message.getTag("sig", &sig, &sigLen)) {
       return 20; // no signature
     }
-    // TODO: verify other fields
-    size_t nonsiglen = (sig - 4 - tokendata);
+    if (sigLen != ED25519_SIG_SIZE)
+      return 21; // invalid signature
+
+    size_t nonsiglen = (sig - 4) - tokendata;
 
     int verified;
     res = wc_ed25519_verify_msg(sig, ED25519_SIG_SIZE, tokendata, nonsiglen,
@@ -156,7 +177,27 @@ public:
       return res;
     if (verified == 0)
       return 30; // invalid signature
-    return 0;    // valid
+
+    // TODO: verify other fields
+
+    uint8_t* expLoc;
+    uint8_t expLen;
+    if (!message.getTag("exp", &expLoc, &expLen)) {
+      return 40; // no expires
+    }
+    if (expLen != 8) {
+      return 41; // invalid expires
+    }
+    uint64_t exp = readLongBE(expLoc);
+    // STOPSHIP check expiration
+    // if (expLoc < now())
+    // return 45; // expired
+
+    // typ == "TWT"
+    // iss == "thecoven.space"
+    // readLongBE( getTag("uid") )
+
+    return 0; // valid
   }
 };
 

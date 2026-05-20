@@ -17,11 +17,11 @@ class TLV(
                 if (slice.isEmpty()) return TLV(map)
 
                 if (slice.size < 4) throw IllegalArgumentException("Invalid length of tag")
-                val tag = slice.sliceArray(0..3).toString(Charsets.US_ASCII)
+                val tag = slice.sliceArray(0..<3).toString(Charsets.US_ASCII)
                 val size = slice[3].toUByte().toInt()
                 if (slice.size < size+4) throw IllegalArgumentException("Invalid length of content")
-                map[tag] = slice.sliceArray(4..4+size)
-                slice = slice.sliceArray(4+size..slice.size)
+                map[tag] = slice.sliceArray(4..<4+size)
+                slice = slice.sliceArray(4+size..<slice.size)
             }
         }
     }

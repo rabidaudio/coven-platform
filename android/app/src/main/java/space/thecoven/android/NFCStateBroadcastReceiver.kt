@@ -4,9 +4,11 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.trySendBlocking
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.internal.ChannelFlow
+import kotlinx.coroutines.runBlocking
 
-class NFCStateBroadcastReceiver : BroadcastReceiver() {
+class NFCStateBroadcastReceiver: BroadcastReceiver() {
 
     enum class NFCState {
         Connected,
@@ -26,6 +28,7 @@ class NFCStateBroadcastReceiver : BroadcastReceiver() {
         }
     }
 
+//    var handler: ((NFCState) -> Unit)? = null
     val channel = Channel<NFCState>(Channel.UNLIMITED)
 
     override fun onReceive(context: Context, intent: Intent) {
@@ -35,7 +38,7 @@ class NFCStateBroadcastReceiver : BroadcastReceiver() {
         } catch (e: IllegalArgumentException) {
             return // invalid enum
         }
-        // since the channel is infinite it should never block or fail
-        channel.trySendBlocking(state)
+//        handler?.invoke(state)
+        runBlocking { channel.send(state) }
     }
 }

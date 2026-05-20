@@ -26,6 +26,8 @@
                 android:resource="@xml/apduservice"/>
         </service>
 
+        <receiver android:name=".NFCStateBroadcastReceiver" android:exported="false" />
+
         <activity
             android:name=".MainActivity"
             android:exported="true"

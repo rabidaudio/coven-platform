@@ -76,7 +76,7 @@ object IDCard {
                 val chaining = clai.and(0b0111_0000).shr(4).toByte()
                 val secureMessaging = clai.and(0b0000_1100).shr(2).toByte()
                 val channel = LogicalChannel.entries.find {
-                    it.byte.toUByte().toInt() == clai.and(0b0000_0011)
+                    it.byte.toInt() == clai.and(0b0000_0011)
                 }!!
                 val ins = message[1]
                 val command = Command.entries.find { it.ins == ins }
@@ -85,73 +85,77 @@ object IDCard {
                 val p1 = message[2]
                 val p2 = message[3]
 
-                if (message.size == 4) {
-                    // lc and le must both be zero
-                    val data = byteArrayOf()
-                    val le = 0
-                    return InterIndustry(
-                        chaining = chaining,
-                        secureMessaging = secureMessaging,
-                        channel = channel,
-                        command = command,
-                        p1 = p1,
-                        p2 = p2,
-                        data = data,
-                        maxResponseSize = le
-                    )
-                } else if (message.size == 5) {
-                    // last byte must be Le
-                    val data = byteArrayOf()
-                    val le = message[4].toInt()
-                    return InterIndustry(
-                        chaining = chaining,
-                        secureMessaging = secureMessaging,
-                        channel = channel,
-                        command = command,
-                        p1 = p1,
-                        p2 = p2,
-                        data = data,
-                        maxResponseSize = le
-                    )
-                } else {
-                    val lc = if (message[4] == 0.toByte())
-                        message[5].toUByte().toInt().shl(8) + message[6].toUByte().toInt()
-                    else message[4].toUByte().toInt()
-                    val dataStart = if (message[4] == 0.toByte()) 7 else 5
-                    if (message.size < dataStart + lc)
-                        throw InvalidMessageException("Invalid message: incomplete data")
+                when (message.size) {
+                    4 -> {
+                        // lc and le must both be zero
+                        val data = byteArrayOf()
+                        val le = 0
+                        return InterIndustry(
+                            chaining = chaining,
+                            secureMessaging = secureMessaging,
+                            channel = channel,
+                            command = command,
+                            p1 = p1,
+                            p2 = p2,
+                            data = data,
+                            maxResponseSize = le
+                        )
+                    }
+                    5 -> {
+                        // last byte must be Le
+                        val data = byteArrayOf()
+                        val le = message[4].toInt()
+                        return InterIndustry(
+                            chaining = chaining,
+                            secureMessaging = secureMessaging,
+                            channel = channel,
+                            command = command,
+                            p1 = p1,
+                            p2 = p2,
+                            data = data,
+                            maxResponseSize = le
+                        )
+                    }
+                    else -> {
+                        val lc = if (message[4] == 0.toByte())
+                            message[5].toUByte().toInt().shl(8) + message[6].toUByte().toInt()
+                        else message[4].toUByte().toInt()
+                        val dataStart = if (message[4] == 0.toByte()) 7 else 5
+                        if (message.size < dataStart + lc)
+                            throw InvalidMessageException("Invalid message: incomplete data")
 
-                    val data = message.copyOfRange(dataStart, dataStart + lc)
-                    val bytesRemain = message.size - dataStart - lc
-                    val leIndex = dataStart + lc
-                    val le = if (bytesRemain == 0) {
-                        0
-                    } else if (bytesRemain == 1) {
-                        if (message[leIndex] == 0.toByte()) 256
-                        else message[leIndex].toUByte().toInt()
-                    } else if (bytesRemain == 2) {
-                        if (message[leIndex] == 0.toByte() && message[leIndex + 1] == 0.toByte())
-                            65536
-                        else message[leIndex].toUByte().toInt()
-                            .shl(8) + message[leIndex + 1].toUByte().toInt()
-                    } else if (bytesRemain == 3) {
-                        if (message[leIndex] != 0.toByte())
-                            throw InvalidMessageException("Invalid message: unexpected Le")
-                        if (message[leIndex + 1] == 0.toByte() && message[leIndex + 2] == 0.toByte())
-                            65536
-                        else message[leIndex + 1].toUByte().toInt()
-                            .shl(8) + message[leIndex + 2].toUByte().toInt()
-                    } else throw InvalidMessageException("Invalid message: unexpected Le")
-                    return InterIndustry(
-                        chaining = chaining,
-                        secureMessaging = secureMessaging,
-                        channel = channel,
-                        command = command,
-                        p1 = p1,
-                        p2 = p2,
-                        data = data,
-                        maxResponseSize = le
-                    )
+                        val data = message.copyOfRange(dataStart, dataStart + lc)
+                        val bytesRemain = message.size - dataStart - lc
+                        val leIndex = dataStart + lc
+                        val le = if (bytesRemain == 0) {
+                            0
+                        } else if (bytesRemain == 1) {
+                            if (message[leIndex] == 0.toByte()) 256
+                            else message[leIndex].toUByte().toInt()
+                        } else if (bytesRemain == 2) {
+                            if (message[leIndex] == 0.toByte() && message[leIndex + 1] == 0.toByte())
+                                65536
+                            else message[leIndex].toUByte().toInt()
+                                .shl(8) + message[leIndex + 1].toUByte().toInt()
+                        } else if (bytesRemain == 3) {
+                            if (message[leIndex] != 0.toByte())
+                                throw InvalidMessageException("Invalid message: unexpected Le")
+                            if (message[leIndex + 1] == 0.toByte() && message[leIndex + 2] == 0.toByte())
+                                65536
+                            else message[leIndex + 1].toUByte().toInt()
+                                .shl(8) + message[leIndex + 2].toUByte().toInt()
+                        } else throw InvalidMessageException("Invalid message: unexpected Le")
+                        return InterIndustry(
+                            chaining = chaining,
+                            secureMessaging = secureMessaging,
+                            channel = channel,
+                            command = command,
+                            p1 = p1,
+                            p2 = p2,
+                            data = data,
+                            maxResponseSize = le
+                        )
+                    }
                 }
             }
         }

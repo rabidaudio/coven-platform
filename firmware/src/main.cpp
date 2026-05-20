@@ -115,7 +115,6 @@ int writeGeneralAuthenticate(Message* msg) {
 }
 
 bool writeDoorLockStatus(Message* msg, uint16_t status) {
-  uint8_t* outbuf;
   msg->setHeader(&DOOR_STATUS_MESSAGE);
   return msg->appendUInt16(status);
 }

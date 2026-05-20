@@ -101,11 +101,11 @@ class DoorAccessService : HostApduService() {
                 when (val proprietaryCommand = cmd.cla.toUByte().toInt()) {
                     DOOR_UNLOCK_RESULT_CMD -> {
                         // auth result
-                        if (cmd.raw.size < 2) {
+                        if (cmd.raw.size < 7) {
                             Log.d("NFC", "invalid command size=${cmd.raw.size}")
                             return IDCard.Status.InvalidLength.toResponse()
                         }
-                        val status = IDCard.Status(cmd.raw[0].toUByte(), cmd.raw[1].toUByte())
+                        val status = IDCard.Status(cmd.raw[4].toUByte(), cmd.raw[5].toUByte())
                         if (status.isOkay()) {
                             Log.d("NFC", "door unlocked")
                             // TODO: show local notification

@@ -42,7 +42,7 @@ class Authenticator(val doorSigningPubKey: ByteArray, val infoField: ByteArray) 
         Log.d("CRYPTO", "nonce=${nonce.toHexString()}")
         Log.d("CRYPTO", "pkR=${pubkey.toHexString()}")
 
-        val plaintext = nonce + token
+        val plaintext = nonce + token.size.toByte() + token
 
         val pkR = hpke.deserializePublicKey(pubkey)
         val aar = byteArrayOf() // empty
