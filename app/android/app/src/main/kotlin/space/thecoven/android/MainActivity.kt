@@ -1,4 +1,4 @@
-package com.example.app
+package space.thecoven.android
 
 import io.flutter.embedding.android.FlutterActivity
 
