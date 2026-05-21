@@ -7,7 +7,7 @@
 
     <application
         android:label="app"
-        android:name="${applicationName}"
+        android:name=".CovenApp"
         android:icon="@mipmap/ic_launcher">
         <activity
             android:name=".MainActivity"

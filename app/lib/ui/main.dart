@@ -1,3 +1,4 @@
+import 'package:app/nfc.dart';
 import 'package:app/token.dart';
 import 'package:app/ui/login.dart';
 import 'package:app/ui/utils.dart';
@@ -37,7 +38,17 @@ class _MainPageState extends State<MainPage> with RouterState {
           ),
         ],
       ),
-      body: Center(child: Text("Main")),
+      body: Center(child: _NFCView()),
+    );
+  }
+}
+
+class _NFCView extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<NFCState>(
+      valueListenable: NFC.instance.state,
+      builder: (context, value, child) => Text("NFC State: $value"),
     );
   }
 }
