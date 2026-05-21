@@ -3,11 +3,8 @@
 This project implements an electronic NFC door lock for the makerspace from scratch,
 allowing active members access to the space via their phone.
 
-It's a large mono-repo consisting of several interconnected subprojects:
-- `firmware`: The embedded code for the door lock controller, using PlatformIO
-- `member-site`: An HTTP API in Go for managing and authenticating members
-- `app`: A Flutter app that is able to unlock the door via NFC
-- `keygen`: A small Go CLI which generates security credentials for all the projects
+The microprocessor is an ESP32. It does connect to WIFI, but only to periodically synchronize
+the internal RTC via NTP. All authentication is done offline.
 
 ## Handshake algorithm
 
@@ -19,13 +16,13 @@ The security requirements for the door lock mechanism:
 
 Based on these requirements, the following algorithm is used:
 1. The app authenticates via HTTPS with the server using a typical mechanism (password, oauth, etc).
-2. The server returns a `UserSecret`, which is info about the user, signed by the server using ED25519. Similar in design to a JWT token but in binary rather than JSON due to embedded performance.
-3. The app saves this `UserSecret` securely on the device. It periodically re-authenticates to avoid expiration.
+2. The server returns a `Token`, which is info about the user, signed by the server using ED25519. Similar in design to a JWT token but in binary rather than JSON due to embedded performance.
+3. The app saves this `Token` securely on the device. It periodically re-authenticates to avoid expiration.
 4. The user presents the phone to the door controller. The phone and door controller communicate via standards described in ISO 14443-4 and ISO 7816-4.
 5. The door sends an `AID` identifying it as implementing this (proprietary) algorithm. The app has associated itself with this `AID` so that it executes in response to the message.
-6. The door sends an authentication `Challenge` to the app, which is a random nonce, a signature verifying itself, and a public key to use for secure transfer of the `UserSecret`.
-7. The app verifies the signature, then encrypts the `UserSecret` and sends it. Secure transfer of the `UserSecret` is done using HPKE as defined in [RFC 9180](https://datatracker.ietf.org/doc/rfc9180/), using `DHKEM(X25519, HKDF-SHA256)/HKDF-SHA256/AES-128-GCM`.
-8. The door decrypts the message. Then it verifies that the nonce is correct, that the `UserSecret` is signed by the server, and that it has not expired.
+6. The door sends an authentication `Challenge` to the app, which is it's a random nonce and a public key to use for secure transfer of the `Token`, both signed with ED25519 to verify it as an authentic challenge.
+7. The app verifies the signature, then encrypts the `Token` and sends it. Secure transfer of the `UserSecret` is done using HPKE as defined in [RFC 9180](https://datatracker.ietf.org/doc/rfc9180/), using `DHKEM(X25519, HKDF-SHA256)/HKDF-SHA256/AES-128-GCM`.
+8. The door decrypts the message. Then it verifies that the nonce is correct, that the `Token` is signed by the server, and that it has not expired.
 9.  If all of those checks pass, it unlocks the door for a brief number of seconds. It sends a message to the app indicating if the door was unlocked.
 
 An example of this algorithm can be found in `keygen/algorithm_test.go`.

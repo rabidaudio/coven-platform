@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/atlantacoven/coven-platform/tlvwt"
+	"github.com/joho/godotenv"
 )
 
 const DOMAIN = "thecoven.space"
@@ -38,6 +39,11 @@ const firmwareIncludePath = "firmware/include/_keys.h"
 const androidResPath = "app/android/app/src/main/res/values/keys.xml"
 
 func main() {
+	  err := godotenv.Load()
+    if err != nil {
+        panic(err)
+    }
+
 	log.Println("Generating new keys...")
 	ServerSignPub, ServerKey, err := ed25519.GenerateKey(rand.Reader)
 	if err != nil {
@@ -60,6 +66,7 @@ func main() {
 	log.Printf("Saving includes file for door lock code: %v\n", firmwareIncludePath)
 	f1 := must(os.Create(firmwareIncludePath))
 	defer f1.Close()
+	f1.WriteString("#ifndef _KEYS_H_\n#define _KEYS_H_\n")
 	f1.WriteString("#include <Arduino.h>\n\n")
 	// TODO: put these in PROGMEM instead
 	fmt.Fprintf(f1, "#define EXCHANGE_INFO_LEN %v\nbyte EXCHANGE_INFO[] = \"%v\";\n\n", len(INFO), INFO)
@@ -67,6 +74,13 @@ func main() {
 	writeCArray(f1, "AID", AID)
 	writeCArray(f1, "DOOR_SIGN_PRIV_KEY", DoorKey)
 	writeCArray(f1, "SERVER_SIGNING_PUB_KEY", ServerSignPub)
+	if os.Getenv("WIFI_SSID") == "" || os.Getenv("WIFI_PASS") == "" {
+		panic(fmt.Errorf("WIFI_SSID and WIFI_PASS env vars must be set"))
+	}
+	f1.WriteString("\n\n")
+	fmt.Fprintf(f1, "char WIFI_SSID[] = \"%v\";\n",os.Getenv("WIFI_SSID"))
+	fmt.Fprintf(f1, "char WIFI_PASS[] = \"%v\";\n",os.Getenv("WIFI_PASS"))
+	f1.WriteString("#endif // _KEYS_H_\n")
 
 	log.Printf("Saving public keys for Android app: %v\n", androidResPath)
 	f2 := must(os.Create(androidResPath))

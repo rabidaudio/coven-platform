@@ -9,6 +9,7 @@
 #include <wolfssl/wolfcrypt/random.h>
 
 #include "_keys.h"
+#include "rtc.h"
 #include "tlv.h"
 
 #define NONCE_SIZE 8
@@ -38,6 +39,7 @@ uint64_t readLongBE(uint8_t* src) {
 }
 
 class KeyVerification {
+  RTC* rtc;
   WC_RNG kv_rng[1];
   ed25519_key server_sign_pub_key;
   ed25519_key door_sign_key;
@@ -49,7 +51,8 @@ class KeyVerification {
   uint8_t _decryptedMessage[DECRYPTED_MESSAGE_CAPACITY];
 
 public:
-  int begin() {
+  int begin(RTC* r) {
+    rtc = r;
     int ret = wolfCrypt_Init();
     if (ret != 0) {
       return ret;
@@ -143,7 +146,7 @@ public:
 
     // nonce is first 8 bytes
     if (constantCompare(_decryptedMessage, _nonce, NONCE_SIZE) != 0) {
-      return 10; // invalid nonce
+      return 0x10; // invalid nonce
     }
 
     uint8_t decryptedSize = _decryptedMessage[NONCE_SIZE];
@@ -156,17 +159,17 @@ public:
     // uint8_t algSize;
     // if (message.getTag("alg", &alg, &algSize)) {
     //   if (algSize != 7 || memcmp(alg, "Ed25519", 7) != 0) {
-    //     return 15; // unsupported alg
+    //     return 0x15; // unsupported alg
     //   }
     // }
 
     uint8_t* sig;
     uint8_t sigLen;
     if (!message.getTag("sig", &sig, &sigLen)) {
-      return 20; // no signature
+      return 0x20; // no signature
     }
     if (sigLen != ED25519_SIG_SIZE)
-      return 21; // invalid signature
+      return 0x21; // invalid signature
 
     size_t nonsiglen = (sig - 4) - tokendata;
 
@@ -176,23 +179,23 @@ public:
     if (res != 0)
       return res;
     if (verified == 0)
-      return 30; // invalid signature
-
-    // TODO: verify other fields
+      return 0x30; // invalid signature
 
     uint8_t* expLoc;
     uint8_t expLen;
     if (!message.getTag("exp", &expLoc, &expLen)) {
-      return 40; // no expires
+      return 0x40; // no expires
     }
     if (expLen != 8) {
-      return 41; // invalid expires
+      return 0x41; // invalid expires
     }
     uint64_t exp = readLongBE(expLoc);
-    // STOPSHIP check expiration
-    // if (expLoc < now())
-    // return 45; // expired
+    uint64_t now = rtc->getTime();
+    if (exp < now) {
+      return 0x45; // expired
+    }
 
+    // TODO: verify other fields
     // typ == "TWT"
     // iss == "thecoven.space"
     // readLongBE( getTag("uid") )

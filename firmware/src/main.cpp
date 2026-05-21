@@ -2,49 +2,15 @@
 
 #if defined ARDUINO_ESP32_THING
 #define NFC_CS_PIN 2
-#elif defined ARDUINO_TEENSY31
-#define NFC_CS_PIN 15
 #endif
 
-#include "NTP3.h"
-#include <WiFi.h>
-
-WiFiUDP wifiUdp;
-NTP3 ntp(wifiUdp);
-
-void setup() {
-  Serial.begin(115200);
-  WiFi.begin(ssid, pass);
-  while (WiFi.status() != WL_CONNECTED) {
-    Serial.println("Connecting ...");
-    delay(500);
-  }
-  Serial.println("Connected");
-  ntp.updateInterval(300); // TODO: less frequent
-  ntp.syncRTC(true);
-  ntp.begin();
-  Serial.println("start NTP");
-  Serial.print("time_t size: ");
-  Serial.println(sizeof(time_t));
-}
-
-void loop() {
-  if (ntp.update()) {
-    Serial.println(ntp.formattedTime("%d. %B %Y")); // dd. Mmm yyyy
-    Serial.println(ntp.formattedTime("%A %T"));     // Www hh:mm:ss
-    Serial.print("epoch: ");
-    Serial.println(ntp.epoch());
-  } else {
-    Serial.println("No valid time data");
-  }
-  delay(1000);
-}
-
-/*
+#include "_keys.h"
 #include "iso7816_4.h"
 #include "key_verification.h"
+#include "rtc.h"
 #include "tlv.h"
 
+RTC rtc;
 KeyVerification verifier;
 
 const MessageHeader SELECT_AID_MESSAGE = {
@@ -72,11 +38,22 @@ bool writeDoorLockStatus(Message* msg, uint16_t status);
 
 void setup() {
   Serial.begin(115200);
-  verifier.begin();
+
+  WiFi.begin(WIFI_SSID, WIFI_PASS);
+  while (WiFi.status() != WL_CONNECTED) {
+    Serial.println("Connecting ...");
+    delay(500);
+  }
+  Serial.println("Connected");
+
+  rtc.begin();
+  verifier.begin(&rtc);
   beginNFC();
 }
 
 void loop() {
+  rtc.update();
+
   // wait for a card in range
   if (!cardInRange()) {
     delay(100);
@@ -126,7 +103,7 @@ void loop() {
     // TODO: unlock door
   } else {
     Serial.print(F("verification failed: "));
-    Serial.println(res);
+    Serial.println(res, HEX);
     writeDoorLockStatus(&doorStatusMsg, 0x6600 | (uint16_t)res);
   }
   // don't care if it goes through or not
@@ -151,4 +128,3 @@ bool writeDoorLockStatus(Message* msg, uint16_t status) {
   msg->setHeader(&DOOR_STATUS_MESSAGE);
   return msg->appendUInt16(status);
 }
-*/
