@@ -11,4 +11,8 @@ class TokenManager {
   static Future<void> putToken(String token) async {
     await FlutterKeychain.put(key: key, value: token);
   }
+
+  static Future<void> deleteToken() async {
+    await FlutterKeychain.remove(key: key);
+  }
 }

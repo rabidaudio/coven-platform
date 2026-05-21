@@ -1,10 +1,10 @@
-import 'package:flutter/scheduler.dart';
 import 'package:flutter/material.dart';
 
 import '../api.dart';
 import '../token.dart';
 import '../prefs.dart';
 import './main.dart';
+import './utils.dart';
 import 'styles.dart';
 
 class LoginPage extends StatefulWidget {
@@ -12,7 +12,7 @@ class LoginPage extends StatefulWidget {
   _LoginFormState createState() => _LoginFormState();
 }
 
-class _LoginFormState extends State<LoginPage> {
+class _LoginFormState extends State<LoginPage> with SnackbarState, RouterState {
   final TextEditingController _email = TextEditingController();
   final TextEditingController _password = TextEditingController();
 
@@ -24,7 +24,6 @@ class _LoginFormState extends State<LoginPage> {
 
   bool isLoggedIn = false;
   bool isLoading = false;
-  String? failureToast;
 
   Future<void> _loadCachedEmail() async {
     final email = await Prefs.getString("user.email");
@@ -39,7 +38,6 @@ class _LoginFormState extends State<LoginPage> {
   Future<void> submit(String email, String password) async {
     setState(() {
       isLoading = true;
-      failureToast = null;
     });
 
     // cache email
@@ -50,20 +48,22 @@ class _LoginFormState extends State<LoginPage> {
       setState(() {
         isLoading = false;
         isLoggedIn = true;
-        failureToast = null;
       });
+      pushNavigation((context) {
+        return MainPage();
+      }, mode: NavigationCommand.pushReplacement);
     } on Exception catch (e) {
       if (e is ApiException && e.response.statusCode == 400) {
         setState(() {
           isLoggedIn = false;
           isLoading = false;
-          failureToast = "Invalid username or password";
+          pushSnackbar("Invalid username or password.");
         });
       } else {
         setState(() {
           isLoggedIn = false;
           isLoading = false;
-          failureToast = "An error occurred, please try again later";
+          pushSnackbar("An error occurred, please try again later.");
         });
       }
     }
@@ -84,30 +84,8 @@ class _LoginFormState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
-    if (failureToast != null) {
-      final msg = failureToast!;
-      SchedulerBinding.instance.addPostFrameCallback((_) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(msg),
-            duration: const Duration(seconds: 2),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      });
-      failureToast = null; // clear it so it doesn't get shown again
-    } else if (isLoggedIn) {
-      SchedulerBinding.instance.addPostFrameCallback((_) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute<void>(
-            builder: (context) {
-              return MainPage();
-            },
-          ),
-        );
-      });
-    }
+    showFlash(context);
+    navigate(context);
 
     return Scaffold(
       appBar: AppBar(
