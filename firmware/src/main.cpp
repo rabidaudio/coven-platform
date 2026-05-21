@@ -6,11 +6,44 @@
 #define NFC_CS_PIN 15
 #endif
 
+#include "NTP3.h"
+#include <WiFi.h>
+
+WiFiUDP wifiUdp;
+NTP3 ntp(wifiUdp);
+
+void setup() {
+  Serial.begin(115200);
+  WiFi.begin(ssid, pass);
+  while (WiFi.status() != WL_CONNECTED) {
+    Serial.println("Connecting ...");
+    delay(500);
+  }
+  Serial.println("Connected");
+  ntp.updateInterval(300); // TODO: less frequent
+  ntp.syncRTC(true);
+  ntp.begin();
+  Serial.println("start NTP");
+  Serial.print("time_t size: ");
+  Serial.println(sizeof(time_t));
+}
+
+void loop() {
+  if (ntp.update()) {
+    Serial.println(ntp.formattedTime("%d. %B %Y")); // dd. Mmm yyyy
+    Serial.println(ntp.formattedTime("%A %T"));     // Www hh:mm:ss
+    Serial.print("epoch: ");
+    Serial.println(ntp.epoch());
+  } else {
+    Serial.println("No valid time data");
+  }
+  delay(1000);
+}
+
+/*
 #include "iso7816_4.h"
 #include "key_verification.h"
 #include "tlv.h"
-
-#define DOOR_UNLOCK_RESULT_CMD
 
 KeyVerification verifier;
 
@@ -118,3 +151,4 @@ bool writeDoorLockStatus(Message* msg, uint16_t status) {
   msg->setHeader(&DOOR_STATUS_MESSAGE);
   return msg->appendUInt16(status);
 }
+*/
