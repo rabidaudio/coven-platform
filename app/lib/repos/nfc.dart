@@ -2,6 +2,7 @@ import 'dart:io' show Platform;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_nfc_kit/flutter_nfc_kit.dart';
 
 enum NFCState {
   unknown,
@@ -38,6 +39,11 @@ class NFC {
     });
     // async load the current state
     refreshState();
+  }
+
+  Future<bool> isEnabled() async {
+    final availability = await FlutterNfcKit.nfcAvailability;
+    return availability == NFCAvailability.available;
   }
 
   Future<NFCState> refreshState() async {

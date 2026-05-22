@@ -14,7 +14,7 @@ This is a large mono-repo covering several different inter-connected projects. T
 | [atlantacoven.org/](atlantacoven.org/) | Public website built with [Hugo](https://gohugo.io) — tutorials, docs, project gallery, and landing pages. |
 | [member-site/](member-site/) | The backend for logged-in members (Go). |
 | [app/](app/) | A cross-platform mobile app in [Flutter](https://flutter.dev) for members. |
-| [firmware/](firmware/) | The firmware for the door lock. |
+| [door-lock/](door-lock/) | The firmware and design files for the door lock. |
 | [scripts/](scripts/) | Helper scripts. |
 
 

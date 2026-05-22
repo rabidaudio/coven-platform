@@ -34,7 +34,7 @@ var INFO = DOMAIN
 
 // paths
 const serverSigningPath = "member-site/signing.pem"
-const firmwareIncludePath = "firmware/include/_keys.h"
+const firmwareIncludePath = "door-lock/firmware/include/_keys.h"
 const androidResPath = "app/android/app/src/main/res/values/keys.xml"
 const iosSwiftPath = "app/ios/Runner/Secrets.swift"
 
