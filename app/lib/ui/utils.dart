@@ -15,7 +15,7 @@ class SnackbarMessage {
   });
 }
 
-mixin SnackbarState {
+mixin SnackbarState<T extends StatefulWidget> on State<T> {
   final Queue<SnackbarMessage> _messages = Queue();
 
   void pushSnackbar(
@@ -23,9 +23,17 @@ mixin SnackbarState {
     Duration duration = const Duration(seconds: 2),
     SnackBarBehavior behavior = SnackBarBehavior.floating,
   }) {
-    _messages.add(
-      SnackbarMessage(message, duration: duration, behavior: behavior),
-    );
+    setState(() {
+      _messages.add(
+        SnackbarMessage(message, duration: duration, behavior: behavior),
+      );
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    showSnackbar(context);
+    return Container();
   }
 
   void showSnackbar(BuildContext context) {
@@ -55,11 +63,19 @@ class Navigation {
   Navigation(this.cmd, this.builder);
 }
 
-mixin RouterState {
+mixin RouterState<T extends StatefulWidget> on State<T> {
   final Queue<Navigation> _navigations = Queue();
 
   void pushNavigation(WidgetBuilder builder, {mode = NavigationCommand.push}) {
-    _navigations.add(Navigation(mode, builder));
+    setState(() {
+      _navigations.add(Navigation(mode, builder));
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    navigate(context);
+    return Container();
   }
 
   void navigate(BuildContext context) {

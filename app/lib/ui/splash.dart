@@ -1,68 +1,48 @@
 import 'dart:async';
 
-import 'package:app/ui/main.dart';
-import 'package:flutter/scheduler.dart';
+import 'package:app/ui/utils.dart';
 import 'package:flutter/material.dart';
 
-import '../token.dart';
-import './login.dart';
+import 'package:app/repos/token.dart';
+import 'package:app/ui/home.dart';
+import 'package:app/ui/login.dart';
 
-enum Destination { login, main }
+class SplashPage extends StatefulWidget {
+  const SplashPage({super.key});
 
-class SplashViewModel extends ChangeNotifier {
-  final StreamController<Destination> _streamController = StreamController();
+  @override
+  _SplashPageState createState() => _SplashPageState();
+}
 
-  SplashViewModel() {
+class _SplashPageState extends State<SplashPage> with RouterState {
+  @override
+  void initState() {
+    super.initState();
     _start();
-  }
-
-  Stream<Destination> navDestinations() {
-    return _streamController.stream;
   }
 
   Future<void> _start() async {
     final hasToken = await TokenManager.hasToken();
     if (hasToken) {
-      _streamController.add(Destination.main);
+      pushNavigation(
+        (context) => const HomePage(),
+        mode: NavigationCommand.pushReplacement,
+      );
     } else {
-      _streamController.add(Destination.login);
+      pushNavigation(
+        (context) => const LoginPage(),
+        mode: NavigationCommand.pushReplacement,
+      );
     }
   }
-}
-
-class SplashPage extends StatelessWidget {
-  final _vm = SplashViewModel();
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder(
-      stream: _vm.navDestinations(),
-      builder: (context, snapshot) {
-        if (snapshot.hasData) {
-          SchedulerBinding.instance.addPostFrameCallback((_) {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute<void>(
-                builder: (context) {
-                  switch (snapshot.data!) {
-                    case Destination.login:
-                      return LoginPage();
-                    case Destination.main:
-                      return MainPage();
-                  }
-                },
-              ),
-            );
-          });
-        }
-
-        return Scaffold(
-          body: Center(
-            // TODO: replace with logo
-            child: Text("The Coven"),
-          ),
-        );
-      },
+    return Scaffold(
+      body: Center(
+        // TODO: replace with logo
+        child: Text("The Coven"),
+      ),
     );
   }
 }

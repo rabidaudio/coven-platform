@@ -139,9 +139,6 @@ class ApiException extends HttpException {
   final http.StreamedResponse response;
   final Map<String, dynamic>? body;
 
-  ApiException(
-    String message, {
-    required http.StreamedResponse this.response,
-    this.body,
-  }) : super(message, uri: response.request?.url);
+  ApiException(super.message, {required this.response, this.body})
+    : super(uri: response.request?.url);
 }

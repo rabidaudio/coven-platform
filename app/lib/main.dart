@@ -1,3 +1,7 @@
+import 'dart:io';
+import 'dart:ui';
+
+import 'package:flutter/foundation.dart';
 import 'package:logging/logging.dart';
 import 'package:flutter/material.dart';
 
@@ -8,6 +12,14 @@ void main() {
   Logger.root.onRecord.listen((record) {
     print('${record.level.name}: ${record.time}: ${record.message}');
   });
+
+  if (kDebugMode) {
+    // add a global unhandled exception handler that crashes the app, forcing resolution
+    PlatformDispatcher.instance.onError = (err, stacktrace) {
+      Logger.root.log(Level.SHOUT, "Unhandled exception: $err\n$stacktrace");
+      exit(1);
+    };
+  }
 
   runApp(const CovenApp());
 }

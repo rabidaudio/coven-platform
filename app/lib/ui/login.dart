@@ -1,16 +1,17 @@
-import 'package:app/nfc.dart';
-import 'package:app/ui/splash.dart';
 import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
 
-import '../api.dart';
-import '../token.dart';
-import '../prefs.dart';
-import './main.dart';
-import './utils.dart';
-import 'styles.dart';
+import 'package:app/repos/api.dart';
+import 'package:app/repos/token.dart';
+import 'package:app/repos/prefs.dart';
+import 'package:app/repos/nfc.dart';
+import 'package:app/ui/home.dart';
+import 'package:app/ui/utils.dart';
+import 'package:app/ui/styles.dart';
 
 class LoginPage extends StatefulWidget {
+  const LoginPage({super.key});
+
   @override
   _LoginFormState createState() => _LoginFormState();
 }
@@ -33,9 +34,7 @@ class _LoginFormState extends State<LoginPage> with SnackbarState, RouterState {
     final currentState = await NFC.instance.refreshState();
     Logger.root.log(Level.INFO, "state at login: $currentState");
     if (currentState == NFCState.failedTokenExpired) {
-      setState(() {
-        pushSnackbar("Token invalid or expired. Log in and then try again");
-      });
+      pushSnackbar("Token invalid or expired. Log in and then try again");
     }
   }
 
@@ -63,9 +62,10 @@ class _LoginFormState extends State<LoginPage> with SnackbarState, RouterState {
         isLoading = false;
         isLoggedIn = true;
       });
-      pushNavigation((context) {
-        return MainPage();
-      }, mode: NavigationCommand.pushReplacement);
+      pushNavigation(
+        (context) => const HomePage(),
+        mode: NavigationCommand.pushReplacement,
+      );
     } on Exception catch (e) {
       if (e is ApiException && e.response.statusCode == 400) {
         setState(() {
@@ -98,9 +98,7 @@ class _LoginFormState extends State<LoginPage> with SnackbarState, RouterState {
 
   @override
   Widget build(BuildContext context) {
-    showSnackbar(context);
-    navigate(context);
-
+    super.build(context);
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
