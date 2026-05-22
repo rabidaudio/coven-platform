@@ -29,3 +29,4 @@ plan.md
 member-site/signing.pem
 firmware/include/_keys.h
 app/android/app/src/main/res/values/keys.xml
+app/ios/Runner/Secrets.swift

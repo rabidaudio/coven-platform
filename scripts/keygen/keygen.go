@@ -4,15 +4,14 @@ import (
 	"crypto/ed25519"
 	"crypto/rand"
 	"crypto/x509"
+	"encoding/base64"
 	"encoding/hex"
 	"encoding/pem"
 	"fmt"
 	"io"
 	"log"
 	"os"
-	"time"
 
-	"github.com/atlantacoven/coven-platform/tlvwt"
 	"github.com/joho/godotenv"
 )
 
@@ -37,6 +36,7 @@ var INFO = DOMAIN
 const serverSigningPath = "member-site/signing.pem"
 const firmwareIncludePath = "firmware/include/_keys.h"
 const androidResPath = "app/android/app/src/main/res/values/keys.xml"
+const iosSwiftPath = "app/ios/Runner/Secrets.swift"
 
 func main() {
 	  err := godotenv.Load()
@@ -94,21 +94,17 @@ func main() {
 	fmt.Fprintf(f2, "\t<string name=\"door_signing_pubkey\">%v</string>\n", hex.EncodeToString(dpk))
 	f2.WriteString("</resources>\n")
 
-	// Test key (expired)
-	userId := 1234
-	token := generateExpiredToken(userId, ServerKey)
-	fmt.Println("Test Token:")
-	fmt.Printf("%x\n", token)
-}
-
-func generateExpiredToken(uid int, serverkey ed25519.PrivateKey) []byte {
-	token := tlvwt.Token{}
-	token.SetType("TWT")
-	token.SetIssuer(DOMAIN)
-	expires := time.Now().Add(-24 * time.Hour)
-	token.SetExpiration(expires)
-	tlvwt.TLVMessage(token).SetUInt64("uid", uint64(uid))
-	return must(token.SignAndEncodeString(tlvwt.Ed25519Algorithm{Key: serverkey}))
+	log.Printf("Saving public keys for iOS app: %v\n", iosSwiftPath)
+	f3 := must(os.Create(iosSwiftPath))
+	defer f3.Close()
+	f3.WriteString("import CryptoKit\n\n")
+	fmt.Fprintf(f3, "// %v\n", hex.EncodeToString(AID))
+	fmt.Fprintf(f3, "let AID = Data(base64Encoded: String(\"%v\").data(using: .ascii)!)!\n\n", base64.StdEncoding.EncodeToString(AID))
+	fmt.Fprintf(f3, "let INFO = \"%v\".data(using: .ascii)!\n\n", INFO)
+	fmt.Fprintf(f3, "// %v\n", hex.EncodeToString(ServerSignPub))
+	fmt.Fprintf(f3, "let ServerSignPub = try! Curve25519.Signing.PublicKey(rawRepresentation: Data(base64Encoded: String(\"%v\").data(using: .ascii)!)!)\n\n", base64.StdEncoding.EncodeToString(ServerSignPub))
+	fmt.Fprintf(f3, "// %v\n", hex.EncodeToString(DoorSignPub))
+	fmt.Fprintf(f3, "let DoorSignPub = try! Curve25519.Signing.PublicKey(rawRepresentation: Data(base64Encoded: String(\"%v\").data(using: .ascii)!)!)\n", base64.StdEncoding.EncodeToString(DoorSignPub))
 }
 
 func writeCArray(w io.Writer, name string, data []byte) (err error) {
