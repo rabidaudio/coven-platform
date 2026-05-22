@@ -6,9 +6,12 @@ import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import space.thecoven.android.NFCStateBroadcastReceiver.NFCState
 
-class NFCStateInterface(flutterEngine: FlutterEngine) : MethodChannel.MethodCallHandler {
+class NFCStateInterface(
+    flutterEngine: FlutterEngine,
+    initialState: NFCState = NFCState.unknown
+) : MethodChannel.MethodCallHandler {
 
-    private var state: NFCState = NFCState.Unknown
+    private var state: NFCState = initialState
 
     private val channel: MethodChannel = MethodChannel(
         flutterEngine.dartExecutor.binaryMessenger, "space.thecoven/nfc"
@@ -25,15 +28,13 @@ class NFCStateInterface(flutterEngine: FlutterEngine) : MethodChannel.MethodCall
         result: MethodChannel.Result
     ) {
         when (call.method) {
-            "getNFCState" -> result.success(state.serialize())
+            "getNFCState" -> result.success(state.name)
             else -> result.notImplemented()
         }
     }
 
     fun setState(state: NFCState) {
         this.state = state
-        channel.invokeMethod("onNFCState", state.serialize())
+        channel.invokeMethod("onNFCState", state.name)
     }
-
-    private fun NFCState.serialize() = name.lowercase()
 }

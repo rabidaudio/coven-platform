@@ -1,8 +1,12 @@
 package space.thecoven.android
 
+import android.content.Intent
+import android.content.Intent.FLAG_ACTIVITY_NEW_TASK
 import android.nfc.cardemulation.HostApduService
 import android.os.Bundle
+import android.util.Base64
 import android.util.Log
+import android.widget.Toast
 import space.thecoven.android.NFCStateBroadcastReceiver.NFCState
 
 /**
@@ -20,7 +24,6 @@ class DoorAccessService : HostApduService() {
 
     companion object {
         const val DOOR_UNLOCK_RESULT_CMD = 0xFA
-        val TEST_TOKEN = "616c67074564323535313965787008000000006a0e3b156973730e746865636f76656e2e7370616365747970035457547569640800000000000004d2736967407b542f6a17f8d9690f3de6248050e3f6ee14a6b6bc0be4219ba1aa051c674b02617b54869642e31544826d031463a9a5df7c325a399e98435efa825c4b8f6700".hexToByteArray() // STOPSHIP
     }
 
     override fun onCreate() {
@@ -69,12 +72,12 @@ class DoorAccessService : HostApduService() {
                         val aid = getString(R.string.aid).hexToByteArray()
                         if (!cmd.data.contentEquals(aid))
                             return IDCard.Status.FileOrApplicationNotFound.toResponse()
-                        setState(NFCState.Connected)
+                        setState(NFCState.connected)
                         return IDCard.Status.OK.toResponse()
                     }
 
                     IDCard.Command.GENERAL_AUTHENTICATE -> {
-                        setState(NFCState.Authenticating)
+                        setState(NFCState.authenticating)
                         val challenge = cmd.data
                         Log.d("NFC", "challenge=${challenge.toHexString()}")
 
@@ -82,8 +85,15 @@ class DoorAccessService : HostApduService() {
                         val info = getString(R.string.info).toByteArray()
                         val auth = Authenticator(doorPubSigningKey, info)
 
+                        val userTokenString = TokenManager(applicationContext).getToken()
+                        if (userTokenString == null) {
+                            setState(NFCState.failedTokenExpired)
+                            openApp(NFCState.failedTokenExpired)
+                            return IDCard.Status(0x6A.toUByte(), 0x88.toUByte()).toResponse()
+                        }
+                        val userToken = Base64.decode(userTokenString, Base64.DEFAULT)
                         try {
-                            val encryptedToken = auth.verifyChallengeAndEncryptToken(challenge, TEST_TOKEN)
+                            val encryptedToken = auth.verifyChallengeAndEncryptToken(challenge, userToken)
                             return IDCard.ResponseAPDU(data = encryptedToken)
                         } catch (e: Exception) {
                             Log.e("NFC", "Authentication Failed", e)
@@ -108,10 +118,14 @@ class DoorAccessService : HostApduService() {
                         val status = IDCard.Status(cmd.raw[4].toUByte(), cmd.raw[5].toUByte())
                         if (status.isOkay()) {
                             Log.d("NFC", "door unlocked")
-                            // TODO: show local notification
-                            setState(NFCState.Unlocked)
+                            setState(NFCState.unlocked)
+                        } else if (status.asShort() == 0x6645.toShort()) { // expired
+                            Log.d("NFC", "door NOT unlocked: expired ($status)")
+                            TokenManager(applicationContext).clearToken()
+                            setState(NFCState.failedTokenExpired)
+                            openApp(NFCState.failedTokenExpired)
                         } else {
-                            setState(NFCState.FailedTokenExpired) // TODO: parse status
+                            setState(NFCState.failedOther)
                             Log.d("NFC", "door NOT unlocked: $status")
                         }
                         return IDCard.Status.OK.toResponse()
@@ -129,9 +143,15 @@ class DoorAccessService : HostApduService() {
             }
         }
     }
+    fun openApp(state: NFCState) {
+        startActivity(Intent(this, MainActivity::class.java).apply {
+            flags = FLAG_ACTIVITY_NEW_TASK
+            putExtra("STATE", state.name)
+        })
+    }
 
     override fun onDeactivated(reason: Int) {
-        setState(NFCState.Disconnected)
+        setState(NFCState.disconnected)
         when (reason) {
             DEACTIVATION_LINK_LOSS ->
                 Log.w("NFC", "DoorAccessService deactivated reason=link lost")

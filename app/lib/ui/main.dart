@@ -1,6 +1,7 @@
 import 'package:app/nfc.dart';
 import 'package:app/token.dart';
 import 'package:app/ui/login.dart';
+import 'package:app/ui/splash.dart';
 import 'package:app/ui/utils.dart';
 import 'package:flutter/material.dart';
 
@@ -10,6 +11,22 @@ class MainPage extends StatefulWidget {
 }
 
 class _MainPageState extends State<MainPage> with RouterState {
+  _MainPageState() {
+    _checkLoggedIn();
+  }
+
+  Future<void> _checkLoggedIn() async {
+    final hasToken = await TokenManager.hasToken();
+    if (!hasToken) {
+      setState(() {
+        pushNavigation(
+          (context) => SplashPage(),
+          mode: NavigationCommand.pushReplacement,
+        );
+      });
+    }
+  }
+
   Future<void> logout() async {
     await TokenManager.deleteToken();
     setState(() {

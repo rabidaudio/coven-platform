@@ -28,7 +28,7 @@ mixin SnackbarState {
     );
   }
 
-  void showFlash(BuildContext context) {
+  void showSnackbar(BuildContext context) {
     if (_messages.isEmpty) return;
 
     SchedulerBinding.instance.addPostFrameCallback((_) {

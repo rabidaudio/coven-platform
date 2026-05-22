@@ -22,7 +22,10 @@ class NFC {
   final state = ValueNotifier<NFCState>(NFCState.unknown);
 
   NFCState _fromString(String stateStr) {
-    return NFCState.values.firstWhere((v) => v.name == stateStr);
+    return NFCState.values.firstWhere(
+      (v) => v.name == stateStr,
+      orElse: () => throw ArgumentError("invalid state: $stateStr"),
+    );
   }
 
   NFC() {
@@ -34,13 +37,15 @@ class NFC {
       }
     });
     // async load the current state
-    _getNFCState().then((v) => state.value = v);
+    refreshState();
   }
 
-  Future<NFCState> _getNFCState() async {
+  Future<NFCState> refreshState() async {
     if (Platform.isAndroid) {
       final stateStr = await _interface.invokeMethod<String>("getNFCState");
-      return _fromString(stateStr!);
+      final val = _fromString(stateStr!);
+      state.value = val;
+      return val;
     } else {
       throw StateError("Unsupported platform");
     }

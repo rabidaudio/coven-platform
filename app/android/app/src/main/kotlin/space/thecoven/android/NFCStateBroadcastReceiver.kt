@@ -12,33 +12,32 @@ import kotlinx.coroutines.runBlocking
 class NFCStateBroadcastReceiver: BroadcastReceiver() {
 
     enum class NFCState {
-        Unknown,
-        Connected,
-        Authenticating,
-        Unlocked,
-        FailedTokenExpired,
-        FailedOther,
-        Disconnected
+        unknown,
+        connected,
+        authenticating,
+        unlocked,
+        failedTokenExpired,
+        failedOther,
+        disconnected
     }
 
     companion object {
         fun broadcastState(context: Context, state: NFCState) {
             val i = Intent(context, NFCStateBroadcastReceiver::class.java).apply {
-                type = state.name
+                putExtra("STATE", state.name)
             }
             context.sendBroadcast(i)
         }
     }
 
     override fun onReceive(context: Context, intent: Intent) {
-        val iface = (context.applicationContext as CovenApp).nfcInterface
-        Log.d("NFC", "onReceive $intent iface=$iface")
+        val iface = (context.applicationContext as CovenApp).nfcInterface ?: return
         val state = try {
-            val type = intent.type ?: return
-            NFCState.valueOf(type)
+            val stateStr = intent.getStringExtra("STATE") ?: return
+            NFCState.valueOf(stateStr)
         } catch (e: IllegalArgumentException) {
             return // invalid enum
         }
-        iface?.setState(state)
+        iface.setState(state)
     }
 }

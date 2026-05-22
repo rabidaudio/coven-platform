@@ -1,4 +1,7 @@
+import 'package:app/nfc.dart';
+import 'package:app/ui/splash.dart';
 import 'package:flutter/material.dart';
+import 'package:logging/logging.dart';
 
 import '../api.dart';
 import '../token.dart';
@@ -19,11 +22,22 @@ class _LoginFormState extends State<LoginPage> with SnackbarState, RouterState {
   @override
   void initState() {
     super.initState();
+    _checkNfcState();
     _loadCachedEmail();
   }
 
   bool isLoggedIn = false;
   bool isLoading = false;
+
+  Future<void> _checkNfcState() async {
+    final currentState = await NFC.instance.refreshState();
+    Logger.root.log(Level.INFO, "state at login: $currentState");
+    if (currentState == NFCState.failedTokenExpired) {
+      setState(() {
+        pushSnackbar("Token invalid or expired. Log in and then try again");
+      });
+    }
+  }
 
   Future<void> _loadCachedEmail() async {
     final email = await Prefs.getString("user.email");
@@ -84,7 +98,7 @@ class _LoginFormState extends State<LoginPage> with SnackbarState, RouterState {
 
   @override
   Widget build(BuildContext context) {
-    showFlash(context);
+    showSnackbar(context);
     navigate(context);
 
     return Scaffold(

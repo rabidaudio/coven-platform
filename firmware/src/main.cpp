@@ -104,7 +104,7 @@ void loop() {
   } else {
     Serial.print(F("verification failed: "));
     Serial.println(res, HEX);
-    writeDoorLockStatus(&doorStatusMsg, 0x6600 | (uint16_t)res);
+    writeDoorLockStatus(&doorStatusMsg, 0x6600 | (uint8_t)res);
   }
   // don't care if it goes through or not
   doorStatusMsg.send();
