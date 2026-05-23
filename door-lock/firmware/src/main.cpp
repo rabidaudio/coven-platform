@@ -2,6 +2,8 @@
 
 #if defined ARDUINO_ESP32_THING
 #define NFC_CS_PIN 2
+#define BUZZER_PIN 13
+#define LOCK_PIN 12
 #endif
 
 #include "_keys.h"
@@ -35,9 +37,16 @@ const MessageHeader DOOR_STATUS_MESSAGE = {
 
 int writeGeneralAuthenticate(Message* msg);
 bool writeDoorLockStatus(Message* msg, uint16_t status);
+void failBeep();
+void unlockDoor();
 
 void setup() {
   Serial.begin(115200);
+
+  pinMode(BUZZER_PIN, OUTPUT);
+  pinMode(LOCK_PIN, OUTPUT);
+  digitalWrite(BUZZER_PIN, LOW);
+  digitalWrite(LOCK_PIN, LOW);
 
   WiFi.begin(WIFI_SSID, WIFI_PASS);
   while (WiFi.status() != WL_CONNECTED) {
@@ -100,7 +109,6 @@ void loop() {
   if (res == 0) {
     Serial.println(F("verification success"));
     writeDoorLockStatus(&doorStatusMsg, STATUS_OK);
-    // TODO: unlock door
   } else {
     Serial.print(F("verification failed: "));
     Serial.println(res, HEX);
@@ -109,7 +117,11 @@ void loop() {
   // don't care if it goes through or not
   doorStatusMsg.send();
 
-  delay(1000);
+  if (res == 0) {
+    unlockDoor();
+  } else {
+    failBeep();
+  }
 }
 
 int writeGeneralAuthenticate(Message* msg) {
@@ -127,4 +139,24 @@ int writeGeneralAuthenticate(Message* msg) {
 bool writeDoorLockStatus(Message* msg, uint16_t status) {
   msg->setHeader(&DOOR_STATUS_MESSAGE);
   return msg->appendUInt16(status);
+}
+
+void failBeep() {
+  for (size_t i = 0; i < 3; i++) {
+    digitalWrite(BUZZER_PIN, HIGH);
+    delay(100);
+    digitalWrite(BUZZER_PIN, LOW);
+    delay(100);
+  }
+  delay(1000);
+}
+
+void unlockDoor() {
+  digitalWrite(LOCK_PIN, HIGH);
+  delay(100);
+  digitalWrite(BUZZER_PIN, HIGH);
+  delay(1000);
+  digitalWrite(BUZZER_PIN, LOW);
+  delay(5000);
+  digitalWrite(LOCK_PIN, LOW);
 }
