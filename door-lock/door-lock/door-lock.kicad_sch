@@ -2312,6 +2312,58 @@
 			(embedded_fonts no)
 		)
 	)
+	(text "brown-white\ngreen-white\nblue-white"
+		(exclude_from_sim no)
+		(at 87.376 119.126 90)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right)
+		)
+		(uuid "0d19af20-f875-40c0-801c-e2a333414628")
+	)
+	(text "orange"
+		(exclude_from_sim no)
+		(at 81.788 116.332 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+		(uuid "197790ed-4fff-4ef5-9975-c9ca6895d84e")
+	)
+	(text "orange-white"
+		(exclude_from_sim no)
+		(at 83.82 106.172 90)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left)
+		)
+		(uuid "203fe260-ee3f-48ff-8380-b11ac75f8f8c")
+	)
+	(text "blue"
+		(exclude_from_sim no)
+		(at 80.772 113.792 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+		(uuid "27fe0f33-7c46-4bac-9df8-4f9937cc2fb2")
+	)
+	(text "brown"
+		(exclude_from_sim no)
+		(at 81.28 108.712 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+		(uuid "6ff27581-e5d3-46c9-a221-c8204f339534")
+	)
 	(text "COAX or similar cable"
 		(exclude_from_sim no)
 		(at 215.138 58.42 0)
@@ -2324,13 +2376,23 @@
 	)
 	(text "CAT 5 cable or similar"
 		(exclude_from_sim no)
-		(at 99.06 119.126 0)
+		(at 108.458 106.934 0)
 		(effects
 			(font
 				(size 1.27 1.27)
 			)
 		)
 		(uuid "89f8562d-0b5b-4880-bc12-dda9eb81ad1b")
+	)
+	(text "green"
+		(exclude_from_sim no)
+		(at 81.28 111.252 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+		(uuid "bf62ab10-0091-4a41-9603-19449a0e9603")
 	)
 	(text "SPI Mode: SEL0=OFF SEL1=ON"
 		(exclude_from_sim no)
@@ -4623,7 +4685,6 @@
 		(in_bom yes)
 		(on_board yes)
 		(dnp no)
-		(fields_autoplaced yes)
 		(uuid "b0193c3c-a9f0-4368-b35d-c8eed3afd91d")
 		(property "Reference" "#PWR09"
 			(at 82.55 105.41 0)
@@ -4635,7 +4696,7 @@
 			)
 		)
 		(property "Value" "+3.3V"
-			(at 82.55 96.52 0)
+			(at 79.502 97.79 0)
 			(effects
 				(font
 					(size 1.27 1.27)

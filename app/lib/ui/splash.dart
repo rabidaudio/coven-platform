@@ -38,6 +38,7 @@ class _SplashPageState extends State<SplashPage> with RouterState {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     return Scaffold(
       body: Center(
         // TODO: replace with logo

@@ -6,7 +6,6 @@
 #define LOCK_PIN 12
 #endif
 
-#include "_keys.h"
 #include "iso7816_4.h"
 #include "key_verification.h"
 #include "rtc.h"
@@ -47,13 +46,6 @@ void setup() {
   pinMode(LOCK_PIN, OUTPUT);
   digitalWrite(BUZZER_PIN, LOW);
   digitalWrite(LOCK_PIN, LOW);
-
-  WiFi.begin(WIFI_SSID, WIFI_PASS);
-  while (WiFi.status() != WL_CONNECTED) {
-    Serial.println("Connecting ...");
-    delay(500);
-  }
-  Serial.println("Connected");
 
   rtc.begin();
   verifier.begin(&rtc);
